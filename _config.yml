@@ -66,6 +66,11 @@ default_category: uncategorized
 category_map:
 tag_map:
 
+# SiteMap
+sitemap:
+  path: sitemap.xml
+  rel: false
+
 # Archive page setting
 archive_generator:
   per_page: 0
