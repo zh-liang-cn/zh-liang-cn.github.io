@@ -54,7 +54,7 @@
 <meta property="og:description" content="今天工作中遇到Rails的一个问题，最后发现是使用的一个叫Rack包版本不兼容Rails2.3引起的，虽然问题很容易就解决了，但是Rack这个包是干什么的却引发了我的兴趣，经过查资料阅读代码，写了这篇博客。Rack是一个中间件，介于Web应用程序和Web服务器之间，为所有的Web服务器都提供了统一的接口，使用Rack构建的Web应用程序能简单换到其他的Web服务器上，因为Rails在底层用到了Ra">
 <meta property="og:locale" content="zh_CN">
 <meta property="article:published_time" content="2012-08-01T07:57:40.000Z">
-<meta property="article:modified_time" content="2020-01-04T15:06:38.377Z">
+<meta property="article:modified_time" content="2020-01-04T15:13:10.564Z">
 <meta property="article:author" content="zh.liang.cn@gmail.com">
 <meta property="article:tag" content="ruby">
 <meta property="article:tag" content="rails">
@@ -210,7 +210,7 @@
                   <i class="fa fa-calendar-check-o"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2020-01-04 23:06:38" itemprop="dateModified" datetime="2020-01-04T23:06:38+08:00">2020-01-04</time>
+                <time title="修改时间：2020-01-04 23:13:10" itemprop="dateModified" datetime="2020-01-04T23:13:10+08:00">2020-01-04</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -225,20 +225,6 @@
             </span>
 
           
-  
-  <span class="post-meta-item">
-    
-      <span class="post-meta-item-icon">
-        <i class="fa fa-comment-o"></i>
-      </span>
-      <span class="post-meta-item-text">Disqus：</span>
-    
-    <a title="disqus" href="/2012/08/01/rails-rack/#comments" itemprop="discussionUrl">
-      <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2012/08/01/rails-rack/" itemprop="commentCount"></span>
-    </a>
-  </span>
-  
-  
 
         </div>
       </header>
@@ -515,16 +501,6 @@ sudo gem install mongrel --pre</code></pre><p>下面代码演示了如何创建�
 
   
 
-<script>
-  function loadCount() {
-    var d = document, s = d.createElement('script');
-    s.src = 'https://zh-liang-cn.disqus.com/count.js';
-    s.id = 'dsq-count-scr';
-    (d.head || d.body).appendChild(s);
-  }
-  // defer loading until the whole page loading is completed
-  window.addEventListener('load', loadCount, false);
-</script>
 <script>
   NexT.utils.loadComments(document.querySelector('#disqus_thread'), () => {
     if (window.DISQUS) {

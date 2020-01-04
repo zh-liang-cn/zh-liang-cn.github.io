@@ -54,7 +54,7 @@
 <meta property="og:description" content="对于某些query，MySQL会创建临时表来进行处理，临时表有两种：基于MEMORY存储引擎的临时内存表以及基于MyISAM存储引擎的临时磁盘表。当临时内存表的大小达到一定限制的时候，MySQL就会将临时内存表写入到磁盘，变为临时磁盘表。这个限制由tmp_table_size和max_heap_table_size这两个变量中的最小值确定。">
 <meta property="og:locale" content="zh_CN">
 <meta property="article:published_time" content="2014-04-17T18:02:33.000Z">
-<meta property="article:modified_time" content="2020-01-04T15:06:38.377Z">
+<meta property="article:modified_time" content="2020-01-04T15:13:10.564Z">
 <meta property="article:author" content="zh.liang.cn@gmail.com">
 <meta property="article:tag" content="MySQL">
 <meta property="article:tag" content="Database">
@@ -210,7 +210,7 @@
                   <i class="fa fa-calendar-check-o"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2020-01-04 23:06:38" itemprop="dateModified" datetime="2020-01-04T23:06:38+08:00">2020-01-04</time>
+                <time title="修改时间：2020-01-04 23:13:10" itemprop="dateModified" datetime="2020-01-04T23:13:10+08:00">2020-01-04</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -225,20 +225,6 @@
             </span>
 
           
-  
-  <span class="post-meta-item">
-    
-      <span class="post-meta-item-icon">
-        <i class="fa fa-comment-o"></i>
-      </span>
-      <span class="post-meta-item-text">Disqus：</span>
-    
-    <a title="disqus" href="/2014/04/17/mysql-tmp_table_size-max_heap_table_size/#comments" itemprop="discussionUrl">
-      <span class="post-comments-count disqus-comment-count" data-disqus-identifier="2014/04/17/mysql-tmp_table_size-max_heap_table_size/" itemprop="commentCount"></span>
-    </a>
-  </span>
-  
-  
 
         </div>
       </header>
@@ -492,16 +478,6 @@
 
   
 
-<script>
-  function loadCount() {
-    var d = document, s = d.createElement('script');
-    s.src = 'https://zh-liang-cn.disqus.com/count.js';
-    s.id = 'dsq-count-scr';
-    (d.head || d.body).appendChild(s);
-  }
-  // defer loading until the whole page loading is completed
-  window.addEventListener('load', loadCount, false);
-</script>
 <script>
   NexT.utils.loadComments(document.querySelector('#disqus_thread'), () => {
     if (window.DISQUS) {
