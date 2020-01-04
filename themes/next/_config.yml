@@ -590,7 +590,7 @@ comments:
 disqus:
   enable: true
   shortname: zh-liang-cn
-  count: true
+  #count: true
   #post_meta_order: 0
 
 # DisqusJS
