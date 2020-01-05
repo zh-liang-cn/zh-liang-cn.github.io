@@ -83,6 +83,15 @@ tag_generator:
   per_page: 0
   order_by: -date
 
+# RSS/Atom feed setting
+feed:
+  type: 
+    - atom
+    - rss2
+  path: 
+    - atom.xml
+    - rss.xml
+
 # Metadata elements
 ## https://developer.mozilla.org/en-US/docs/Web/HTML/Element/meta
 meta_generator: true

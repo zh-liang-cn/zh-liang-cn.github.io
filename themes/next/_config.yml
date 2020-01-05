@@ -128,6 +128,7 @@ menu:
   #schedule: /schedule/ || calendar
   #sitemap: /sitemap.xml || sitemap
   #commonweal: /404/ || heartbeat
+  rss: /rss.xml || rss
 
 # Enable / Disable menu icons / item badges.
 menu_settings:
@@ -191,7 +192,7 @@ social:
   #YouTube: https://youtube.com/yourname || youtube
   #Instagram: https://instagram.com/yourname || instagram
   #Skype: skype:yourname?call|chat || skype
-  RSS: /atom.xml || rss
+  RSS: /rss.xml || rss
 
 social_icons:
   enable: true

@@ -3,6 +3,7 @@ title:
   category: Category
   tag: Tag
   schedule: Schedule
+  rss: RSS
 
 menu:
   home: Home
@@ -14,6 +15,7 @@ menu:
   schedule: Schedule
   sitemap: Sitemap
   commonweal: Commonweal 404
+  rss: RSS
 
 sidebar:
   overview: Overview
