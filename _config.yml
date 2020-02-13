@@ -66,6 +66,11 @@ default_category: uncategorized
 category_map:
 tag_map:
 
+# SiteMap
+sitemap:
+  path: sitemap.xml
+  rel: false
+
 # Archive page setting
 archive_generator:
   per_page: 0
@@ -77,6 +82,15 @@ archive_generator:
 tag_generator:
   per_page: 0
   order_by: -date
+
+# RSS/Atom feed setting
+feed:
+  type: 
+    - atom
+    - rss2
+  path: 
+    - atom.xml
+    - rss.xml
 
 # Metadata elements
 ## https://developer.mozilla.org/en-US/docs/Web/HTML/Element/meta
@@ -105,7 +119,7 @@ ignore:
 # Extensions
 ## Plugins: https://hexo.io/plugins/
 ## Themes: https://hexo.io/themes/
-theme: jekyll-theme-cayman
+theme: next
 
 # Deployment
 ## Docs: https://hexo.io/docs/deployment.html
