@@ -49,7 +49,7 @@
   <meta name="description" content="数据库事务是数据库管理系统执行过程中的一个逻辑单位，包含了一个有限的数据库操作序列。事务不是天然存在的东西，它是被人为创造出来，目的是简化应用层的编程模型。数据库事务有两个目的：（1）定义一个逻辑单位，以便于当数据库从故障中恢复的时候能正确地恢复数据；（2）提供一种隔离方式，以便于解决多个客户端并发操作的时候出现的奇怪问题。">
 <meta property="og:type" content="article">
 <meta property="og:title" content="数据库的事务以及事务隔离级别">
-<meta property="og:url" content="http://zh-liang-cn.github.io/2020/01/05/isolation-levels-in-database/index.html">
+<meta property="og:url" content="http://zh-liang-cn.github.io/2020/02/13/isolation-levels-in-database/index.html">
 <meta property="og:site_name" content="周亮的博客">
 <meta property="og:description" content="数据库事务是数据库管理系统执行过程中的一个逻辑单位，包含了一个有限的数据库操作序列。事务不是天然存在的东西，它是被人为创造出来，目的是简化应用层的编程模型。数据库事务有两个目的：（1）定义一个逻辑单位，以便于当数据库从故障中恢复的时候能正确地恢复数据；（2）提供一种隔离方式，以便于解决多个客户端并发操作的时候出现的奇怪问题。">
 <meta property="og:locale" content="zh_CN">
@@ -58,14 +58,14 @@
 <meta property="og:image" content="https://zh-liang-cn.oss-cn-hangzhou.aliyuncs.com/images/F51A6AD6-9621-44BB-909F-23752F7CC9CD_1_105_c.jpeg">
 <meta property="og:image" content="https://zh-liang-cn.oss-cn-hangzhou.aliyuncs.com/images/2070BC05-6770-4BE7-BAA3-5C88761D03C3_1_105_c.jpeg">
 <meta property="og:image" content="https://zh-liang-cn.oss-cn-hangzhou.aliyuncs.com/images/76024979-5358-4E84-AE98-6CEB66AB4ECE_1_105_c.jpeg">
-<meta property="article:published_time" content="2020-01-05T14:11:26.000Z">
-<meta property="article:modified_time" content="2020-02-13T15:56:03.968Z">
+<meta property="article:published_time" content="2020-02-13T16:01:02.000Z">
+<meta property="article:modified_time" content="2020-02-13T16:03:56.713Z">
 <meta property="article:author" content="zh.liang.cn@gmail.com">
 <meta property="article:tag" content="Database">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="https://zh-liang-cn.oss-cn-hangzhou.aliyuncs.com/images/51EB2AC5-758D-42CD-947E-6CDE8D1A7654_1_105_c.jpeg">
 
-<link rel="canonical" href="http://zh-liang-cn.github.io/2020/01/05/isolation-levels-in-database/">
+<link rel="canonical" href="http://zh-liang-cn.github.io/2020/02/13/isolation-levels-in-database/">
 
 
 <script id="page-configurations">
@@ -201,7 +201,7 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="http://zh-liang-cn.github.io/2020/01/05/isolation-levels-in-database/">
+    <link itemprop="mainEntityOfPage" href="http://zh-liang-cn.github.io/2020/02/13/isolation-levels-in-database/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.gif">
@@ -223,16 +223,10 @@
                 <i class="fa fa-calendar-o"></i>
               </span>
               <span class="post-meta-item-text">发表于</span>
+              
 
-              <time title="创建时间：2020-01-05 22:11:26" itemprop="dateCreated datePublished" datetime="2020-01-05T22:11:26+08:00">2020-01-05</time>
+              <time title="创建时间：2020-02-14 00:01:02 / 修改时间：00:03:56" itemprop="dateCreated datePublished" datetime="2020-02-14T00:01:02+08:00">2020-02-14</time>
             </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="fa fa-calendar-check-o"></i>
-                </span>
-                <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2020-02-13 23:56:03" itemprop="dateModified" datetime="2020-02-13T23:56:03+08:00">2020-02-13</time>
-              </span>
 
           
 
@@ -376,7 +370,7 @@
 <p>使用<code>begin</code>(或者<code>start transaction</code>)显示开启一个事务，然后使用<code>commit</code>提交，或者<code>rollback</code>回滚</p>
 <figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">begin</span>;</span><br><span class="line"><span class="keyword">delete</span> <span class="keyword">from</span> <span class="keyword">users</span> <span class="keyword">where</span> <span class="keyword">id</span> = <span class="number">100</span>;</span><br><span class="line"><span class="keyword">delete</span> <span class="keyword">from</span> blogs <span class="keyword">where</span> user_id = <span class="number">100</span>;</span><br><span class="line"><span class="keyword">commit</span>;</span><br></pre></td></tr></table></figure>
 
-<h2 id="参考："><a href="#参考：" class="headerlink" title="参考："></a>参考：</h2><ul>
+<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><ul>
 <li><a href="https://en.wikipedia.org/wiki/Database_transaction" target="_blank" rel="noopener">Wikipedia - Database transaction</a></li>
 <li><a href="https://en.wikipedia.org/wiki/Isolation_(database_systems)" target="_blank" rel="noopener">Wikipedia - Isolation (database systems)</a></li>
 <li><a href="https://dev.mysql.com/doc/refman/8.0/en/innodb-transaction-isolation-levels.html" target="_blank" rel="noopener">MySQL 8.0 Reference Manual / Transaction Isolation Levels</a></li>
@@ -400,13 +394,10 @@
         
     <div class="post-nav">
       <div class="post-nav-item">
-    <a href="/2018/08/17/clean-code/" rel="prev" title="《Clean Code》阅读笔记">
-      <i class="fa fa-chevron-left"></i> 《Clean Code》阅读笔记
+    <a href="/2020/01/18/use-python-pulp-solve-linear-planning-problem/" rel="prev" title="用Python的pulp库求解线性规划问题">
+      <i class="fa fa-chevron-left"></i> 用Python的pulp库求解线性规划问题
     </a></div>
-      <div class="post-nav-item">
-    <a href="/2020/01/18/use-python-pulp-solve-linear-planning-problem/" rel="next" title="用Python的pulp库求解线性规划问题">
-      用Python的pulp库求解线性规划问题 <i class="fa fa-chevron-right"></i>
-    </a></div>
+      <div class="post-nav-item"></div>
     </div>
       </footer>
     
@@ -473,7 +464,7 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
-          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#事务是什么"><span class="nav-number">1.</span> <span class="nav-text">事务是什么</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#ACID是什么"><span class="nav-number">2.</span> <span class="nav-text">ACID是什么</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#事务的隔离级别是什么"><span class="nav-number">3.</span> <span class="nav-text">事务的隔离级别是什么</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#脏读"><span class="nav-number">3.1.</span> <span class="nav-text">脏读</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#更新丢失"><span class="nav-number">3.2.</span> <span class="nav-text">更新丢失</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#脏写"><span class="nav-number">3.3.</span> <span class="nav-text">脏写</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#不可重复读（读倾斜）"><span class="nav-number">3.4.</span> <span class="nav-text">不可重复读（读倾斜）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#幻读（写倾斜）"><span class="nav-number">3.5.</span> <span class="nav-text">幻读（写倾斜）</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#事务隔离是如何实现的"><span class="nav-number">4.</span> <span class="nav-text">事务隔离是如何实现的</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#可序列化的"><span class="nav-number">4.1.</span> <span class="nav-text">可序列化的</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#重复读取"><span class="nav-number">4.2.</span> <span class="nav-text">重复读取</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#读已提交"><span class="nav-number">4.3.</span> <span class="nav-text">读已提交</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#阅读未提交"><span class="nav-number">4.4.</span> <span class="nav-text">阅读未提交</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#基于锁的并发控制是什么"><span class="nav-number">5.</span> <span class="nav-text">基于锁的并发控制是什么</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#MySQL里面的事务控制"><span class="nav-number">6.</span> <span class="nav-text">MySQL里面的事务控制</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#参考："><span class="nav-number">7.</span> <span class="nav-text">参考：</span></a></li></ol></div>
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#事务是什么"><span class="nav-number">1.</span> <span class="nav-text">事务是什么</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#ACID是什么"><span class="nav-number">2.</span> <span class="nav-text">ACID是什么</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#事务的隔离级别是什么"><span class="nav-number">3.</span> <span class="nav-text">事务的隔离级别是什么</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#脏读"><span class="nav-number">3.1.</span> <span class="nav-text">脏读</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#更新丢失"><span class="nav-number">3.2.</span> <span class="nav-text">更新丢失</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#脏写"><span class="nav-number">3.3.</span> <span class="nav-text">脏写</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#不可重复读（读倾斜）"><span class="nav-number">3.4.</span> <span class="nav-text">不可重复读（读倾斜）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#幻读（写倾斜）"><span class="nav-number">3.5.</span> <span class="nav-text">幻读（写倾斜）</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#事务隔离是如何实现的"><span class="nav-number">4.</span> <span class="nav-text">事务隔离是如何实现的</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#可序列化的"><span class="nav-number">4.1.</span> <span class="nav-text">可序列化的</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#重复读取"><span class="nav-number">4.2.</span> <span class="nav-text">重复读取</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#读已提交"><span class="nav-number">4.3.</span> <span class="nav-text">读已提交</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#阅读未提交"><span class="nav-number">4.4.</span> <span class="nav-text">阅读未提交</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#基于锁的并发控制是什么"><span class="nav-number">5.</span> <span class="nav-text">基于锁的并发控制是什么</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#MySQL里面的事务控制"><span class="nav-number">6.</span> <span class="nav-text">MySQL里面的事务控制</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#参考"><span class="nav-number">7.</span> <span class="nav-text">参考</span></a></li></ol></div>
       </div>
       <!--/noindex-->
 
@@ -598,8 +589,8 @@
       DISQUS.reset({
         reload: true,
         config: {page: {
-            url: "http://zh-liang-cn.github.io/2020/01/05/isolation-levels-in-database/",
-            identifier: "2020/01/05/isolation-levels-in-database/",
+            url: "http://zh-liang-cn.github.io/2020/02/13/isolation-levels-in-database/",
+            identifier: "2020/02/13/isolation-levels-in-database/",
             title: "数据库的事务以及事务隔离级别"
           }
         }
