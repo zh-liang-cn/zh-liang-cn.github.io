@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+
+<script id="hexo-configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    hostname: new URL('http://zh-liang-cn.github.io').hostname,
+    root: '/',
+    scheme: 'Mist',
+    version: '7.7.0',
+    exturl: false,
+    sidebar: {"position":"right","display":"post","padding":18,"offset":12,"onmobile":false},
+    copycode: {"enable":false,"show_result":false,"style":null},
+    back2top: {"enable":true,"sidebar":false,"scrollpercent":false},
+    bookmark: {"enable":false,"color":"#222","save":"auto"},
+    fancybox: false,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    comments: {"style":"tabs","active":"disqus","storage":true,"lazyload":false,"nav":{"disqus":{"text":"Load Disqus","order":-1}},"activeClass":"disqus"},
+    algolia: {
+      appID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    path: '',
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}
+  };
+</script>
+
+  <meta name="description" content="今天工作中遇到JavaScript的Date计算和格式化的问题，顺便整理了一下JavaScript中的Date的相关API，试做简单记录，代码均在Node.js上测试通过。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="JavaScript Date">
+<meta property="og:url" content="http://zh-liang-cn.github.io/2012/09/11/javascript-date/index.html">
+<meta property="og:site_name" content="周亮的博客">
+<meta property="og:description" content="今天工作中遇到JavaScript的Date计算和格式化的问题，顺便整理了一下JavaScript中的Date的相关API，试做简单记录，代码均在Node.js上测试通过。">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2012-09-11T08:26:48.000Z">
+<meta property="article:modified_time" content="2020-01-03T07:54:52.773Z">
+<meta property="article:author" content="zh.liang.cn@gmail.com">
+<meta property="article:tag" content="javascript">
+<meta property="article:tag" content="web">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://zh-liang-cn.github.io/2012/09/11/javascript-date/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true
+  };
+</script>
+
+  <title>JavaScript Date | 周亮的博客</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-155312277-1"></script>
+    <script>
+      if (CONFIG.hostname === location.hostname) {
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'UA-155312277-1');
+      }
+    </script>
+
+
+  <script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?1c73fccfb9ac29ccf116da41b86cb08d";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="周亮的博客" type="application/atom+xml">
+<link rel="alternate" href="/rss.xml" title="周亮的博客" type="application/rss+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-meta">
+
+    <div>
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">周亮的博客</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+  </div>
+
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-rss">
+
+    <a href="/rss.xml" rel="section"><i class="fa fa-fw fa-rss"></i>RSS</a>
+
+  </li>
+  </ul>
+
+</nav>
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content">
+            
+
+  <div class="posts-expand">
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://zh-liang-cn.github.io/2012/09/11/javascript-date/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="zh.liang.cn@gmail.com">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="周亮的博客">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          JavaScript Date
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2012-09-11 16:26:48" itemprop="dateCreated datePublished" datetime="2012-09-11T16:26:48+08:00">2012-09-11</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2020-01-03 15:54:52" itemprop="dateModified" datetime="2020-01-03T15:54:52+08:00">2020-01-03</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/JavaScript/" itemprop="url" rel="index">
+                    <span itemprop="name">JavaScript</span>
+                  </a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p><strong>2013-07-03 更新：</strong></p>
+<blockquote>
+<p>为了解决本文中的关于Date的一些坑，我创建了一个项目<a href="https://github.com/zhlwish/enhanced-jsdate" target="_blank" rel="noopener">enhanced-jsdate</a>，非常简单，有<a href="https://github.com/zhlwish/enhanced-jsdate/blob/master/src/enhanced-jsdate.coffee" target="_blank" rel="noopener">CoffeeScript</a>和<a href="https://github.com/zhlwish/enhanced-jsdate/blob/master/lib/enhanced-jsdate.js" target="_blank" rel="noopener">JavaScript</a>两个版本。</p>
+</blockquote>
+<p>今天工作中遇到JavaScript的Date计算和格式化的问题，顺便整理了一下JavaScript中的Date的相关API，试做简单记录，代码均在<a href="http://nodejs.org/" target="_blank" rel="noopener">Node.js</a>上测试通过。</p>
+<h2 id="Date构造函数"><a href="#Date构造函数" class="headerlink" title="Date构造函数"></a>Date构造函数</h2><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 当前时间</span></span><br><span class="line"><span class="comment">// Tue Sep 11 2012 15:37:46 GMT+0800 (中国标准时间)</span></span><br><span class="line"><span class="keyword">new</span> <span class="built_in">Date</span>();</span><br><span class="line"><span class="comment">// Fri Jan 02 1970 08:00:00 GMT+0800 (中国标准时间)</span></span><br><span class="line"><span class="keyword">new</span> <span class="built_in">Date</span>(<span class="number">3600</span> * <span class="number">24</span> * <span class="number">1000</span>);</span><br></pre></td></tr></table></figure>
+
+<p>除了构造函数外，<code>Date.UTC()</code>也用于构造日期，但是并不返回Date，而是返回从1970-01-01开始的毫秒数，比如：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 1328054400100, 即2012-01-01 00:00:00 0100</span></span><br><span class="line"><span class="built_in">Date</span>.UTC(<span class="number">2012</span>, <span class="number">1</span>, <span class="number">1</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">100</span>);</span><br></pre></td></tr></table></figure>
+
+<p>需要注意的是，<code>Date()</code> 函数返回日期字符串，比如：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// date是字符串：'Tue Sep 11 2012 15:34:48 GMT+0800 (中国标准时间)'</span></span><br><span class="line"><span class="keyword">var</span> date = <span class="built_in">Date</span>();</span><br></pre></td></tr></table></figure>
+
+<h2 id="字符串转日期"><a href="#字符串转日期" class="headerlink" title="字符串转日期"></a>字符串转日期</h2><p>Date.parse(string)方法并 _不是返回Date，而是返回整数_。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 1120752000000, 即2005-07-08</span></span><br><span class="line"><span class="built_in">Date</span>.parse(<span class="string">"Jul 8, 2005"</span>);</span><br><span class="line"><span class="built_in">Date</span>.parse(<span class="string">"2005-07-08"</span>);</span><br><span class="line"><span class="built_in">Date</span>.parse(<span class="string">"2005/07/08"</span>);</span><br></pre></td></tr></table></figure>
+
+<h2 id="日期转字符串"><a href="#日期转字符串" class="headerlink" title="日期转字符串"></a>日期转字符串</h2><figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">toString();         <span class="comment">// Tue Sep 11 2012 15:09:01 GMT+0800</span></span><br><span class="line">toTimeString();     <span class="comment">// 15:09:34 GMT+0800</span></span><br><span class="line">toDateString();     <span class="comment">// Tue Sep 11 2012</span></span><br><span class="line">toGMTString();      <span class="comment">// Tue, 11 Sep 2012 07:10:05 GMT</span></span><br><span class="line">toUTCString();      <span class="comment">// Tue, 11 Sep 2012 07:10:17 GMT</span></span><br><span class="line">toLocaleString();   <span class="comment">// 2012年9月11日 15:10:31</span></span><br><span class="line">toLocaleTimeString();   <span class="comment">// 15:10:45</span></span><br><span class="line">toLocaleDateString();   <span class="comment">// 2012年9月11日</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="Get系列方法"><a href="#Get系列方法" class="headerlink" title="Get系列方法"></a>Get系列方法</h2><p>Date提供了一系列Get和Set方法，可以获取和设置年份、月份、日期、小时等等信息，并且提供了本地时间和UTC时间两套方案。</p>
+<p>获取本地时间方法如下：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">var</span> date = <span class="keyword">new</span> <span class="built_in">Date</span>();</span><br><span class="line">date.getDate();     <span class="comment">// 从 Date 对象返回一个月中的某一天 (1 ~ 31)。</span></span><br><span class="line">date.getDay();      <span class="comment">// 从 Date 对象返回一周中的某一天 (0 ~ 6)。</span></span><br><span class="line">date.getMonth();    <span class="comment">// 从 Date 对象返回月份 (0 ~ 11)。</span></span><br><span class="line">date.getFullYear(); <span class="comment">// 从 Date 对象以四位数字返回年份。不用使用getYear()。</span></span><br><span class="line">date.getHours();    <span class="comment">// 返回 Date 对象的小时 (0 ~ 23)。</span></span><br><span class="line">date.getMinutes();  <span class="comment">// 返回 Date 对象的分钟 (0 ~ 59)。</span></span><br><span class="line">date.getSeconds();  <span class="comment">// 返回 Date 对象的秒数 (0 ~ 59)。</span></span><br><span class="line">date.getMilliseconds(); <span class="comment">//返回 Date 对象的毫秒(0 ~ 999)。</span></span><br></pre></td></tr></table></figure>
+
+<p>另外，<code>date.getTime()</code>方法返回从1970-01-01开始到现在的毫秒数。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">date.getTime(); <span class="comment">// 返回1970年1月1日至今的毫秒数。</span></span><br></pre></td></tr></table></figure>
+
+<p>Get系列获取本地时间的方法和获取UTC时间的方法一一对应，如</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">date.getUTCDate();</span><br></pre></td></tr></table></figure>
+
+<h2 id="Set系列方法"><a href="#Set系列方法" class="headerlink" title="Set系列方法"></a>Set系列方法</h2><p>Set系列方法和Get系列方法一一对应，如：</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">date.setDate(<span class="number">24</span>);</span><br><span class="line">date.setUTCDate(<span class="number">24</span>);</span><br></pre></td></tr></table></figure>
+
+<p>同样，<code>date.setTime(time)</code>方法以毫秒数设置Date对象，和<code>new Date(time)</code>的作用一样。</p>
+<h2 id="Date之间的计算"><a href="#Date之间的计算" class="headerlink" title="Date之间的计算"></a>Date之间的计算</h2><p>Date之间的计算实际上是毫秒数的计算，加法除外，加法实际上是字符串连接，比如</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Tue Sep 11 2012 15:40:45 GMT+0800 (中国标准时间)</span></span><br><span class="line"><span class="keyword">var</span> d = <span class="keyword">new</span> <span class="built_in">Date</span>();</span><br><span class="line"><span class="comment">// Tue Sep 11 2012 15:40:50 GMT+0800 (中国标准时间)</span></span><br><span class="line"><span class="keyword">var</span> b = <span class="keyword">new</span> <span class="built_in">Date</span>();</span><br><span class="line"><span class="comment">// -5781</span></span><br><span class="line"><span class="built_in">console</span>.log(d - b);</span><br><span class="line"><span class="comment">// 'Tue Sep 11 2012 15:40:45 GMT+0800 (中国标准时间)Tue Sep 11 2012 15:40:50 GMT+0800 (中国标准时间)'</span></span><br><span class="line"><span class="built_in">console</span>.log(d + b);</span><br><span class="line"><span class="comment">// 0.999999995709353</span></span><br><span class="line"><span class="built_in">console</span>.log(d / b);</span><br><span class="line"><span class="comment">// 1.8153499959824195e+24</span></span><br><span class="line"><span class="built_in">console</span>.log(d * b);</span><br></pre></td></tr></table></figure>
+
+<h2 id="Date到字符串的自定义格式转换"><a href="#Date到字符串的自定义格式转换" class="headerlink" title="Date到字符串的自定义格式转换"></a>Date到字符串的自定义格式转换</h2><p>JavaScript并没有提供像Ruby的<code>strftime()</code>这样的方法，如果需要某种格式的日期字符串只能自己实现。比如下面方法实现将日期转化成_yyyy-mm-dd_形式的字符串。</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">Date</span>.prototype.toHyphenDateString = <span class="function"><span class="keyword">function</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">    <span class="keyword">var</span> year = <span class="keyword">this</span>.getFullYear();</span><br><span class="line">    <span class="keyword">var</span> month = <span class="keyword">this</span>.getMonth() + <span class="number">1</span>;</span><br><span class="line">    <span class="keyword">var</span> date = <span class="keyword">this</span>.getDate();</span><br><span class="line">    <span class="keyword">if</span> (month &lt; <span class="number">10</span>) &#123; month = <span class="string">"0"</span> + month; &#125;</span><br><span class="line">    <span class="keyword">if</span> (date &lt; <span class="number">10</span>) &#123; date = <span class="string">"0"</span> + date; &#125;</span><br><span class="line">    <span class="keyword">return</span> year + <span class="string">"-"</span> + month + <span class="string">"-"</span> + date;</span><br><span class="line">&#125;;</span><br><span class="line"><span class="keyword">var</span> date = <span class="keyword">new</span> <span class="built_in">Date</span>();</span><br><span class="line"><span class="comment">// 输出2012-09-11</span></span><br><span class="line"><span class="built_in">console</span>.log(date.toHyphenDateString());</span><br></pre></td></tr></table></figure>
+
+<p>如果需要将日期转换为_3天之前_或者_4小时之前_这样的字符串，可以使用<a href="http://timeago.yarp.com/" target="_blank" rel="noopener">JQuery timeago插件</a>。</p>
+<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><ul>
+<li><a href="http://www.w3school.com.cn/js/jsref_obj_date.asp" target="_blank" rel="noopener">JavaScript Date 对象参考手册</a></li>
+<li><a href="http://timeago.yarp.com/" target="_blank" rel="noopener">JQuery timeago插件</a></li>
+<li><a href="http://nodejs.org/" target="_blank" rel="noopener">Node.js</a></li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/javascript/" rel="tag"># javascript</a>
+              <a href="/tags/web/" rel="tag"># web</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2012/08/01/rails-rack/" rel="prev" title="[Rails代码解读]Rack在Rails中的使用">
+      <i class="fa fa-chevron-left"></i> [Rails代码解读]Rack在Rails中的使用
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2012/09/27/vim-upcase-downcase/" rel="next" title="VIM字符大小写转换">
+      VIM字符大小写转换 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+  </div>
+
+
+          </div>
+          
+    
+  <div class="comments">
+    <div id="disqus_thread">
+      <noscript>Please enable JavaScript to view the comments powered by Disqus.</noscript>
+    </div>
+  </div>
+  
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let activeClass = CONFIG.comments.activeClass;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Date构造函数"><span class="nav-number">1.</span> <span class="nav-text">Date构造函数</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#字符串转日期"><span class="nav-number">2.</span> <span class="nav-text">字符串转日期</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#日期转字符串"><span class="nav-number">3.</span> <span class="nav-text">日期转字符串</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Get系列方法"><span class="nav-number">4.</span> <span class="nav-text">Get系列方法</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Set系列方法"><span class="nav-number">5.</span> <span class="nav-text">Set系列方法</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Date之间的计算"><span class="nav-number">6.</span> <span class="nav-text">Date之间的计算</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Date到字符串的自定义格式转换"><span class="nav-number">7.</span> <span class="nav-text">Date到字符串的自定义格式转换</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#参考"><span class="nav-number">8.</span> <span class="nav-text">参考</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">zh.liang.cn@gmail.com</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">31</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">6</span>
+        <span class="site-state-item-name">分类</span>
+      </div>
+      <div class="site-state-item site-state-tags">
+        <span class="site-state-item-count">26</span>
+        <span class="site-state-item-name">标签</span>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/zh-liang-cn" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;zh-liang-cn" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/rss.xml" title="RSS → &#x2F;rss.xml"><i class="fa fa-fw fa-rss"></i>RSS</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">周亮的博客</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v4.2.0
+  </div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">主题 – <a href="https://mist.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Mist</a> v7.7.0
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+<script>
+  NexT.utils.loadComments(document.querySelector('#disqus_thread'), () => {
+    if (window.DISQUS) {
+      DISQUS.reset({
+        reload: true,
+        config: {page: {
+            url: "http://zh-liang-cn.github.io/2012/09/11/javascript-date/",
+            identifier: "2012/09/11/javascript-date/",
+            title: "JavaScript Date"
+          }
+        }
+      });
+    } else {
+      var d = document, s = d.createElement('script');
+      s.src = 'https://zh-liang-cn.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', '' + +new Date());
+      (d.head || d.body).appendChild(s);
+    }
+  });
+</script>
+
+</body>
+</html>

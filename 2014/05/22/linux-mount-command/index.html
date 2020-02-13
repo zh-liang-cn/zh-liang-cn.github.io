@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+
+<script id="hexo-configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    hostname: new URL('http://zh-liang-cn.github.io').hostname,
+    root: '/',
+    scheme: 'Mist',
+    version: '7.7.0',
+    exturl: false,
+    sidebar: {"position":"right","display":"post","padding":18,"offset":12,"onmobile":false},
+    copycode: {"enable":false,"show_result":false,"style":null},
+    back2top: {"enable":true,"sidebar":false,"scrollpercent":false},
+    bookmark: {"enable":false,"color":"#222","save":"auto"},
+    fancybox: false,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    comments: {"style":"tabs","active":"disqus","storage":true,"lazyload":false,"nav":{"disqus":{"text":"Load Disqus","order":-1}},"activeClass":"disqus"},
+    algolia: {
+      appID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    path: '',
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}
+  };
+</script>
+
+  <meta name="description" content="mount命令在我心目中一直是个高大上的命令：首先，经常看见长度很长的mount命令；其次，mount是直接配置硬件的命令，敲命令的时候总是难免担心把机器搞挂了。因此，我一直以来在Mac OS和Ubuntu中都依靠操作系统自动检查插入的磁盘，就像在Windows里面一样，简直弱爆了。今天就抽空把整理一下这方面的知识。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Linux mount命令详解">
+<meta property="og:url" content="http://zh-liang-cn.github.io/2014/05/22/linux-mount-command/index.html">
+<meta property="og:site_name" content="周亮的博客">
+<meta property="og:description" content="mount命令在我心目中一直是个高大上的命令：首先，经常看见长度很长的mount命令；其次，mount是直接配置硬件的命令，敲命令的时候总是难免担心把机器搞挂了。因此，我一直以来在Mac OS和Ubuntu中都依靠操作系统自动检查插入的磁盘，就像在Windows里面一样，简直弱爆了。今天就抽空把整理一下这方面的知识。">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2014-05-22T23:10:23.000Z">
+<meta property="article:modified_time" content="2020-02-13T16:03:56.713Z">
+<meta property="article:author" content="zh.liang.cn@gmail.com">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://zh-liang-cn.github.io/2014/05/22/linux-mount-command/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true
+  };
+</script>
+
+  <title>Linux mount命令详解 | 周亮的博客</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-155312277-1"></script>
+    <script>
+      if (CONFIG.hostname === location.hostname) {
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'UA-155312277-1');
+      }
+    </script>
+
+
+  <script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?1c73fccfb9ac29ccf116da41b86cb08d";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="周亮的博客" type="application/atom+xml">
+<link rel="alternate" href="/rss.xml" title="周亮的博客" type="application/rss+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-meta">
+
+    <div>
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">周亮的博客</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+  </div>
+
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-rss">
+
+    <a href="/rss.xml" rel="section"><i class="fa fa-fw fa-rss"></i>RSS</a>
+
+  </li>
+  </ul>
+
+</nav>
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content">
+            
+
+  <div class="posts-expand">
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://zh-liang-cn.github.io/2014/05/22/linux-mount-command/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="zh.liang.cn@gmail.com">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="周亮的博客">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Linux mount命令详解
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2014-05-23 07:10:23" itemprop="dateCreated datePublished" datetime="2014-05-23T07:10:23+08:00">2014-05-23</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2020-02-14 00:03:56" itemprop="dateModified" datetime="2020-02-14T00:03:56+08:00">2020-02-14</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Linux/" itemprop="url" rel="index">
+                    <span itemprop="name">Linux</span>
+                  </a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>_mount_命令在我心目中一直是个高大上的命令：首先，经常看见长度很长的_mount_命令；其次，是直接配置硬件的命令，敲命令的时候总是难免担心把机器搞挂了。因此，我一直以来在Mac OS和Ubuntu中都依靠操作系统自动检查插入的磁盘，就像在Windows里面一样，简直弱爆了。今天就抽空把整理一下这方面的知识。</p>
+<h2 id="mount命令结构"><a href="#mount命令结构" class="headerlink" title="mount命令结构"></a>mount命令结构</h2><p>先举个例子：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">mount -o remount,rw -t yaffs2 /dev/block/mtdblock3 /system</span><br></pre></td></tr></table></figure>
+
+<p>这个例子里面基本分为四部分，也是我们最常用的四部分：</p>
+<ul>
+<li><code>-o remount,rw</code>，指定选项</li>
+<li><code>-t yaffs2</code>，指定挂载磁盘上的文件系统的类型，这里的_yaffs2_是_Android_的文件系统类型</li>
+<li><code>/dev/block/mtdblock3</code>，指定磁盘的路径</li>
+<li><code>/system</code>，指定挂载点</li>
+</ul>
+<p>也就是这样：</p>
+<pre><code>mount -o &lt;选项&gt; -t &lt;文件系统类型&gt; &lt;磁盘路径&gt; &lt;挂载点&gt;</code></pre><p>需要注意的是：</p>
+<ul>
+<li><code>-t</code>一般情况下不用自定，操作系统会自动识别</li>
+<li>磁盘路径查看方法：Linux: <code>fdisk -l</code>；Mac：<code>diskutil list</code></li>
+</ul>
+<blockquote>
+<p>关于_fdisk_和_diskutil_，请参考：<a href="http://superuser.com/questions/671725/what-is-the-equivalent-of-the-linux-command-sudo-fdisk-l-in-macos" target="_blank" rel="noopener">What is the equivalent of the Linux command “sudo fdisk -l” in MacOS?</a></p>
+</blockquote>
+<h2 id="mount命令的-o选项"><a href="#mount命令的-o选项" class="headerlink" title="mount命令的-o选项"></a>mount命令的-o选项</h2><p>这个命令相对比较复杂的地方可能就是这里了：首先，选项可以有很多个，用逗号分隔；其次，针对不同的文件系统，可能有一些特殊的选项，可以参考<a href="http://linux.die.net/man/8/mount" target="_blank" rel="noopener">man mount</a>，里面用很长的篇幅说明了_mount options for xx_。</p>
+<p>我们记住一下几个常用的就好了：</p>
+<ul>
+<li>修改已经<em>mount_的文件系统的属性：_remount</em></li>
+<li>控制读写权限的：<em>rw_与_ro</em></li>
+<li>控制执行权限的：<em>exec_与_noexec</em></li>
+<li>控制执行权限的：_suid_与_nosuid_。允许和禁止set-user-identifier 或set-group-identifier位起作用</li>
+<li>控制挂载和卸载权限的：_user_与_nouser_，_users_与_nousers_。前者是允许或禁止先前挂载该文件系统的用户挂载和卸载，后者是允许所有的用户挂载和卸载</li>
+<li>控制文件系统的读写方式：<em>sync_与_async</em></li>
+<li>防止用户读写某些系统关键数据：_dev_与_nodev_，如果需要深入了解，请阅读：<a href="http://superuser.com/questions/538550/understanding-mount-option-nodev-and-its-use-with-usb-flash-drives" target="_blank" rel="noopener">Understanding mount option nodev and its use with USB flash drives</a></li>
+<li>如果打开了文件，是否更新文件的访问时间：<em>atime_与_noatime</em></li>
+<li>如果文件的访问时间比当前时间还早，是否更新访问时间：<em>relatime_与_norelatime</em></li>
+<li><em>defaults_：默认选项，包括：_rw_，_suid_，_dev_，_exec_，_auto_，_nouser_，_async_以及_relatime</em></li>
+</ul>
+<blockquote>
+<p>关于_set-user-identifier_详见：<a href="http://www.linuxnix.com/2011/12/suid-set-suid-linuxunix.html" target="_blank" rel="noopener">What is SUID and how to set SUID in Linux/Unix?</a>，这篇文章中有几个例子，想必很容易理解了。</p>
+</blockquote>
+<h2 id="挂载远程文件系统"><a href="#挂载远程文件系统" class="headerlink" title="挂载远程文件系统"></a>挂载远程文件系统</h2><p>Linux和Linux之间文件共享，据我目前所知有两种方法：</p>
+<ol>
+<li>一种是基于NFS，参考：<a href="http://www.tecmint.com/how-to-setup-nfs-server-in-linux/" target="_blank" rel="noopener">How to Setup NFS (Network File System) on RHEL/CentOS/Fedora and Debian/Ubuntu</a></li>
+<li>另一种是基于SSH来挂在远程文件系统，称为sshfs，参考：<a href="http://www.howtogeek.com/howto/ubuntu/how-to-mount-a-remote-folder-using-ssh-on-ubuntu/" target="_blank" rel="noopener">How to Mount a Remote Folder using SSH on Ubuntu</a></li>
+</ol>
+<p>链接中已经给出了具体的方法，此处不赘述，命令格式完全符合本文中提到的结构和参数，除了sshfs是使用_sshfs_命令，而不是_mount_命令。</p>
+<pre><code>mount -t nfs 192.168.0.100:/nfsshare /mnt/nfsshare
+sshfs share@192.168.0.100:/sshshare /mnt/sshshare</code></pre><h2 id="etc-fstab"><a href="#etc-fstab" class="headerlink" title="/etc/fstab"></a>/etc/fstab</h2><p>另外，<em>mount_还有一个参数是_mount -a_，这就不得不提一下Linux中的</em>/etc/fstab_文件和_/etc/mtab_文件。前者是系统启动时会自动挂载的文件系统的信息，后者是系统当前已挂载的文件系统信息。你会发现这个文件里面的配置基本和_mount_命令的参数一致。</p>
+<pre><code>$ cat /etc/fstab
+# &lt;file system&gt; &lt;mount point&gt;   &lt;type&gt;  &lt;options&gt;       &lt;dump&gt;  &lt;pass&gt;
+proc            /proc           proc    nodev,noexec,nosuid 0       0
+...
+
+$ cat /etc/mtab
+proc /proc proc rw,noexec,nosuid,nodev 0 0
+...</code></pre><p>不一样的地方是后面两个字段:</p>
+<ol>
+<li><em>&lt;dump&gt;_告诉_dump_命令是否需要备份这个文件系统，上面例子中因为_proc_是一个<a href="http://baike.baidu.com/view/6096934.htm" target="_blank" rel="noopener">伪文件系统，用于通过内核来访问进程信息</a>，因此不用备份，这个字段是_0</em></li>
+<li><em>&lt;pass&gt;_告诉</em><a href="http://baike.baidu.com/view/1757895.htm" target="_blank" rel="noopener">fsck</a><em>命令是否需要在检查该文件系统，如果需要开机检查该文件系统，可以将这个字段设置为_1</em></li>
+</ol>
+<p>回到<em>mount -a_，一句话，此命令就是读取</em>/etc/fstab_，挂载里面的文件系统，一般Linux系统启动的时候会执行这个命令。</p>
+<h2 id="Linux挂载Windows共享"><a href="#Linux挂载Windows共享" class="headerlink" title="Linux挂载Windows共享"></a>Linux挂载Windows共享</h2><p>一般情况下，可以通过下面这个命令来将Windows的共享挂载到Linux的文件系统中：</p>
+<pre><code>mount -t cifs -o username=administrator,password=admin //192.168.0.1/share/ /mnt/windows</code></pre><p><em><a href="http://baike.baidu.com/view/1034390.htm" target="_blank" rel="noopener">cifs</a>_是微软实现的一种在Windows主机之间进行网络共享的协议。如果你需要在开机的时候自动挂载此文件系统，同样可以相应的配置写到</em>/etc/fstab_文件中。</p>
+<h2 id="umount"><a href="#umount" class="headerlink" title="umount"></a>umount</h2><p>顾名思义，就是卸载文件系统。这个命令更加简单，参数可以是挂载点，也可以是磁盘名称，即下面两种方法均可：</p>
+<pre><code>mount /dev/hda1 /mydoc
+umount /dev/hda1
+umount /mydoc</code></pre><h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><ul>
+<li><a href="http://linux.die.net/man/8/mount" target="_blank" rel="noopener">mount(8) - Linux man page</a></li>
+<li><a href="http://www.cnblogs.com/chengmo/archive/2010/10/13/1850515.html" target="_blank" rel="noopener">linux mount挂载设备（u盘,光盘,iso等 ）使用说明</a></li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2014/04/17/mysql-tmp_table_size-max_heap_table_size/" rel="prev" title="MySQL查询优化：tmp_table_size与max_heap_table_size">
+      <i class="fa fa-chevron-left"></i> MySQL查询优化：tmp_table_size与max_heap_table_size
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2014/06/04/git-tips/" rel="next" title="Git笔记">
+      Git笔记 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+  </div>
+
+
+          </div>
+          
+    
+  <div class="comments">
+    <div id="disqus_thread">
+      <noscript>Please enable JavaScript to view the comments powered by Disqus.</noscript>
+    </div>
+  </div>
+  
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let activeClass = CONFIG.comments.activeClass;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#mount命令结构"><span class="nav-number">1.</span> <span class="nav-text">mount命令结构</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#mount命令的-o选项"><span class="nav-number">2.</span> <span class="nav-text">mount命令的-o选项</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#挂载远程文件系统"><span class="nav-number">3.</span> <span class="nav-text">挂载远程文件系统</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#etc-fstab"><span class="nav-number">4.</span> <span class="nav-text">&#x2F;etc&#x2F;fstab</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Linux挂载Windows共享"><span class="nav-number">5.</span> <span class="nav-text">Linux挂载Windows共享</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#umount"><span class="nav-number">6.</span> <span class="nav-text">umount</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#参考"><span class="nav-number">7.</span> <span class="nav-text">参考</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">zh.liang.cn@gmail.com</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">30</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">6</span>
+        <span class="site-state-item-name">分类</span>
+      </div>
+      <div class="site-state-item site-state-tags">
+        <span class="site-state-item-count">26</span>
+        <span class="site-state-item-name">标签</span>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/zh-liang-cn" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;zh-liang-cn" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/rss.xml" title="RSS → &#x2F;rss.xml"><i class="fa fa-fw fa-rss"></i>RSS</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">周亮的博客</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v4.2.0
+  </div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">主题 – <a href="https://mist.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Mist</a> v7.7.0
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+<script>
+  NexT.utils.loadComments(document.querySelector('#disqus_thread'), () => {
+    if (window.DISQUS) {
+      DISQUS.reset({
+        reload: true,
+        config: {page: {
+            url: "http://zh-liang-cn.github.io/2014/05/22/linux-mount-command/",
+            identifier: "2014/05/22/linux-mount-command/",
+            title: "Linux mount命令详解"
+          }
+        }
+      });
+    } else {
+      var d = document, s = d.createElement('script');
+      s.src = 'https://zh-liang-cn.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', '' + +new Date());
+      (d.head || d.body).appendChild(s);
+    }
+  });
+</script>
+
+</body>
+</html>

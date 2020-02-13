@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 4.2.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/font-awesome.min.css">
+
+
+<script id="hexo-configurations">
+  var NexT = window.NexT || {};
+  var CONFIG = {
+    hostname: new URL('http://zh-liang-cn.github.io').hostname,
+    root: '/',
+    scheme: 'Mist',
+    version: '7.7.0',
+    exturl: false,
+    sidebar: {"position":"right","display":"post","padding":18,"offset":12,"onmobile":false},
+    copycode: {"enable":false,"show_result":false,"style":null},
+    back2top: {"enable":true,"sidebar":false,"scrollpercent":false},
+    bookmark: {"enable":false,"color":"#222","save":"auto"},
+    fancybox: false,
+    mediumzoom: false,
+    lazyload: false,
+    pangu: false,
+    comments: {"style":"tabs","active":"disqus","storage":true,"lazyload":false,"nav":{"disqus":{"text":"Load Disqus","order":-1}},"activeClass":"disqus"},
+    algolia: {
+      appID: '',
+      apiKey: '',
+      indexName: '',
+      hits: {"per_page":10},
+      labels: {"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}
+    },
+    localsearch: {"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},
+    path: '',
+    motion: {"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}}
+  };
+</script>
+
+  <meta name="description" content="我们都知道单元测试，也常常写单元测试，但是对于什么是单元测试却没有仔细思考过，大概觉得创建一个类继承TestCase，然后写一些assert语句就算是了吧。当然我也常常遇到有人认为在Java类中写main函数也算是单元测试的。总之，归结到一句话，我们可能觉得写了一段代码对我的代码中的一个方法进行了验证，就算是单元测试了。一直到前不久之前，我也算是这大部分人中的一个。由于我之前写SSH比较多，因此我">
+<meta property="og:type" content="article">
+<meta property="og:title" content="用EasyMock进行单元测试：什么是EasyMock">
+<meta property="og:url" content="http://zh-liang-cn.github.io/2012/06/28/easymock/index.html">
+<meta property="og:site_name" content="周亮的博客">
+<meta property="og:description" content="我们都知道单元测试，也常常写单元测试，但是对于什么是单元测试却没有仔细思考过，大概觉得创建一个类继承TestCase，然后写一些assert语句就算是了吧。当然我也常常遇到有人认为在Java类中写main函数也算是单元测试的。总之，归结到一句话，我们可能觉得写了一段代码对我的代码中的一个方法进行了验证，就算是单元测试了。一直到前不久之前，我也算是这大部分人中的一个。由于我之前写SSH比较多，因此我">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2012-06-28T08:49:12.000Z">
+<meta property="article:modified_time" content="2020-02-13T16:03:56.713Z">
+<meta property="article:author" content="zh.liang.cn@gmail.com">
+<meta property="article:tag" content="DbUnit">
+<meta property="article:tag" content="junit">
+<meta property="article:tag" content="easymock">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="http://zh-liang-cn.github.io/2012/06/28/easymock/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome: false,
+    isPost: true
+  };
+</script>
+
+  <title>用EasyMock进行单元测试：什么是EasyMock | 周亮的博客</title>
+  
+    <script async src="https://www.googletagmanager.com/gtag/js?id=UA-155312277-1"></script>
+    <script>
+      if (CONFIG.hostname === location.hostname) {
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', 'UA-155312277-1');
+      }
+    </script>
+
+
+  <script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?1c73fccfb9ac29ccf116da41b86cb08d";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+<link rel="alternate" href="/atom.xml" title="周亮的博客" type="application/atom+xml">
+<link rel="alternate" href="/rss.xml" title="周亮的博客" type="application/rss+xml">
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-meta">
+
+    <div>
+      <a href="/" class="brand" rel="start">
+        <span class="logo-line-before"><i></i></span>
+        <span class="site-title">周亮的博客</span>
+        <span class="logo-line-after"><i></i></span>
+      </a>
+    </div>
+  </div>
+
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+</div>
+
+
+<nav class="site-nav">
+  
+  <ul id="menu" class="menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-fw fa-home"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-fw fa-archive"></i>归档</a>
+
+  </li>
+        <li class="menu-item menu-item-rss">
+
+    <a href="/rss.xml" rel="section"><i class="fa fa-fw fa-rss"></i>RSS</a>
+
+  </li>
+  </ul>
+
+</nav>
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content">
+            
+
+  <div class="posts-expand">
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block " lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="http://zh-liang-cn.github.io/2012/06/28/easymock/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="zh.liang.cn@gmail.com">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="周亮的博客">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          用EasyMock进行单元测试：什么是EasyMock
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-calendar-o"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2012-06-28 16:49:12" itemprop="dateCreated datePublished" datetime="2012-06-28T16:49:12+08:00">2012-06-28</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="fa fa-calendar-check-o"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2020-02-14 00:03:56" itemprop="dateModified" datetime="2020-02-14T00:03:56+08:00">2020-02-14</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Java/" itemprop="url" rel="index">
+                    <span itemprop="name">Java</span>
+                  </a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>我们都知道单元测试，也常常写单元测试，但是对于什么是单元测试却没有仔细思考过，大概觉得创建一个类继承TestCase，然后写一些assert语句就算是了吧。当然我也常常遇到有人认为在Java类中写main函数也算是单元测试的。总之，归结到一句话，我们可能觉得写了一段代码对我的代码中的一个方法进行了验证，就算是单元测试了。一直到前不久之前，我也算是这大部分人中的一个。由于我之前写SSH比较多，因此我也想当然得认为要测试一个DAO，就必须往数据库里面插入一些数据，然后调用DAO，看能否返回正确的结果这是单元测试。 根据<a href="http://book.douban.com/subject/5326182/" target="_blank" rel="noopener">《测试驱动开发的艺术》</a>一书中的定义，在以下情况中一个测试不是单元测试：</p>
+<ul>
+<li>访问了数据</li>
+<li>有网络通讯</li>
+<li>访问了文件系统</li>
+<li>不与其他任何单元测试同时运行</li>
+<li>必须配置好环境后才能运行</li>
+</ul>
+<p>因为以上情况下，会使单元测试的速度降低，在大型的项目中，时常会有上千个甚至上万个单元测试用例，这个时间的消耗是我们承担不起的，特别是要求修改了代码必须使所有的单元测试都通过才能提交代码的情况。以上情况中的测试都应该规划到集成测试的范畴。 最近在工作中遇到需要通过Web Service调用远程服务的情况（大家都知道亚马逊是以贯彻SOA著称的公司），在对业务代码进行单元测试的时候遇到了问题，因为自己去搭建一个测试的WebService太麻烦了，而且还得保证数据是固定，很显然，如果每次运行单元测试的时候Web Service都返回不同的结果是不行的。 在这个时候我们就需要<a href="http://easymock.org/" target="_blank" rel="noopener">EasyMock</a>这样的工具来帮我们了。顾名思义，<a href="http://easymock.org/" target="_blank" rel="noopener">EasyMock</a>可以让我们很Easy地创建Mock对象来模拟外部依赖。</p>
+<p>在我的工作中，<a href="http://easymock.org/" target="_blank" rel="noopener">EasyMock</a>使我们不必要真正的通过网络去远程调用事先搭建好的测试Web Service。<strong>一般我们先创建一个Mock对象，然后record（录制）这个对象的行为，接着将对象设置为replay（回放）状态，之后我们执行需要测试的业务代码并检验代码是否返回正确的结果，最后，我们可以verify（验证）整个过程中，Mock对象是否完成了record阶段的设定。</strong></p>
+<p>看起来非常复杂，下面是一个实例，Web Service本身不是重点。 一般，Web Service提供给外界的是通过WSDL定义的接口，通过一些工具可以生成_stub class_，包括一个<code>ServiceClientBuilder</code>，一个<code>ServiceClient</code>接口和一些<code>Model</code>，比如下面的<code>ServiceClient</code>接口：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">interface</span> <span class="title">ServiceClient</span> </span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">public</span> List&lt;String&gt; <span class="title">getGroupsByUser</span><span class="params">(String username)</span></span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>在客户端代码中，使用下面的方式实现一个业务逻辑：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">UserDao</span> </span>&#123;</span><br><span class="line"><span class="keyword">private</span> ServiceClient client;</span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">boolean</span> <span class="title">validate</span><span class="params">(String username)</span> </span>&#123;</span><br><span class="line">    List&lt;String&gt; groups = client.getGroupsByUser(username);</span><br><span class="line">    <span class="keyword">for</span> (String group : groups) &#123;</span><br><span class="line">        <span class="keyword">if</span> (group.equals(<span class="string">"admin"</span>)) &#123;</span><br><span class="line">            <span class="keyword">return</span> <span class="keyword">true</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">false</span>;</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * Used by Unit Test and other injection work</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@param</span> client</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">setClient</span><span class="params">(ServiceClient client)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">this</span>.client = client;</span><br><span class="line">&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p><code>UserDao.validate(String)</code>方法对用户组进行了判断，如果用户是_admin_，则返回<code>true</code>，否则返回<code>false</code>，那么测试代码可以是这样：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">import</span> <span class="keyword">static</span> org.easymock.EasyMock.*;</span><br><span class="line"><span class="keyword">import</span> <span class="keyword">static</span> org.junit.Assert.*;</span><br><span class="line"><span class="keyword">import</span> org.junit.Before;</span><br><span class="line"><span class="keyword">import</span> org.junit.Test;</span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">UserDaoTest</span> </span>&#123;</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> String USERNAME = <span class="string">"liang"</span>;</span><br><span class="line">    <span class="keyword">private</span> UserDao userDao = <span class="keyword">new</span> UserDao();</span><br><span class="line">    <span class="keyword">private</span> ServiceClient client;</span><br><span class="line">    <span class="keyword">private</span> List&lt;String&gt; groupContainsAdmin;</span><br><span class="line">    <span class="keyword">private</span> List&lt;String&gt; groupNotContainAdmin;</span><br><span class="line">    <span class="meta">@Before</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">before</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        client = createMock(ServiceClient<span class="class">.<span class="keyword">class</span>)</span>;</span><br><span class="line">        groupContainsAdmin = <span class="keyword">new</span> ArrayList&lt;String&gt;() &#123;</span><br><span class="line">            &#123;</span><br><span class="line">                add(<span class="string">"admin"</span>);</span><br><span class="line">                add(<span class="string">"user"</span>);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;;</span><br><span class="line">        groupNotContainAdmin = <span class="keyword">new</span> ArrayList&lt;String&gt;() &#123;</span><br><span class="line">            &#123;</span><br><span class="line">                add(<span class="string">"user"</span>);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="meta">@Test</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">testValidateIsAdmin</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        expect(client.getGroupsByUser(eq(USERNAME))).andReturn(</span><br><span class="line">                groupContainsAdmin);</span><br><span class="line">        userDao.setClient(client);</span><br><span class="line">        replay(client);</span><br><span class="line">        <span class="keyword">boolean</span> isAdmin = userDao.validate(USERNAME);</span><br><span class="line">        assertTrue(isAdmin);</span><br><span class="line">        verify(client);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="meta">@Test</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">testValidateIsNotAdmin</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        expect(client.getGroupsByUser(eq(USERNAME))).andReturn(</span><br><span class="line">                groupNotContainAdmin);</span><br><span class="line">        userDao.setClient(client);</span><br><span class="line">        replay(client);</span><br><span class="line">        <span class="keyword">boolean</span> isAdmin = userDao.validate(USERNAME);</span><br><span class="line">        assertFalse(isAdmin);</span><br><span class="line">        verify(client);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>整个代码的执行流程如下：</p>
+<ul>
+<li>每个测试运行之前，先调用<code>EasyMock.createMock(Class)</code>方法创建了<code>ServiceClient</code>的<code>Mock</code>对象;</li>
+<li>在每个测试中，使用<code>EasyMock.expect()</code>方法录制<code>Mock</code>对象的行为，如<code>testValidateIsAdmin()</code>中设置<code>getGroupsByUser()</code>方法的参数必须是USERNAME，并且返回值是groupContainsAdmin，而<code>testValidateIsNotAdmin()</code>中<code>getGroupsByUser()</code>则返回groupNotContainAdmin。这里值得注意的是<code>EasyMock.eq()</code>方法和<code>andReturn()</code>方法；</li>
+<li><code>Mock</code>对象行为录制完成后，调用<code>EasyMock.replay()</code>返回标记<code>Mock</code>对象为回放状态；</li>
+<li>调用业务方法，并且验证业务代码的逻辑的正确性；</li>
+<li>最后调用<code>EasyMock.verify()</code>验证业务代码的执行逻辑和我们录制的一样，确保业务逻辑的调用远程服务执行的正确性。 <a href="http://easymock.org/" target="_blank" rel="noopener">EasyMock</a>除了上面的方法外，还提供了<code>EasyMock.isA(Class)</code>，<code>EasyMock.andStubReturn()</code>等方法以便于更好的完成测试。详细参考<a href="http://easymock.org/EasyMock3_1_Documentation.html" target="_blank" rel="noopener">http://easymock.org/EasyMock3_1_Documentation.html</a>，我之后的文章也会进行总结。 </li>
+</ul>
+<p>不过EasyMock也有不如人意的地方，因为<a href="http://easymock.org/" target="_blank" rel="noopener">EasyMock</a>本身用Java的动态代理方式实现，因此无法实现对静态方法的Mock，不过还有更为强大的<a href="https://code.google.com/p/powermock/" target="_blank" rel="noopener">PowerMock</a>通过cglib这样的字节码操作库实现了对静态方法的Mock，不过即使再强大的PowerMock也是基于<a href="http://easymock.org/" target="_blank" rel="noopener">EasyMock</a>实现的，因此了解<a href="http://easymock.org/" target="_blank" rel="noopener">EasyMock</a>实在是很必要的。</p>
+<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><ul>
+<li><a href="http://easymock.org/EasyMock3_1_Documentation.html" target="_blank" rel="noopener">http://easymock.org/EasyMock3_1_Documentation.html</a></li>
+<li><a href="http://www.ibm.com/developerworks/cn/opensource/os-cn-easymock/" target="_blank" rel="noopener">http://www.ibm.com/developerworks/cn/opensource/os-cn-easymock/</a></li>
+<li><a href="http://macrochen.iteye.com/blog/298032" target="_blank" rel="noopener">http://macrochen.iteye.com/blog/298032</a></li>
+<li><a href="http://www.iteye.com/topic/310294" target="_blank" rel="noopener">http://www.iteye.com/topic/310294</a></li>
+<li><a href="http://www.iteye.com/topic/310313" target="_blank" rel="noopener">http://www.iteye.com/topic/310313</a></li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/DbUnit/" rel="tag"># DbUnit</a>
+              <a href="/tags/junit/" rel="tag"># junit</a>
+              <a href="/tags/easymock/" rel="tag"># easymock</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2012/06/27/vim-buffer/" rel="prev" title="Vim的Buffer/缓冲区">
+      <i class="fa fa-chevron-left"></i> Vim的Buffer/缓冲区
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2012/07/08/javascript-this/" rel="next" title="JavaScript中的this">
+      JavaScript中的this <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+  </div>
+
+
+          </div>
+          
+    
+  <div class="comments">
+    <div id="disqus_thread">
+      <noscript>Please enable JavaScript to view the comments powered by Disqus.</noscript>
+    </div>
+  </div>
+  
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let activeClass = CONFIG.comments.activeClass;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#参考"><span class="nav-number">1.</span> <span class="nav-text">参考</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">zh.liang.cn@gmail.com</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">30</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">6</span>
+        <span class="site-state-item-name">分类</span>
+      </div>
+      <div class="site-state-item site-state-tags">
+        <span class="site-state-item-count">26</span>
+        <span class="site-state-item-name">标签</span>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://github.com/zh-liang-cn" title="GitHub → https:&#x2F;&#x2F;github.com&#x2F;zh-liang-cn" rel="noopener" target="_blank"><i class="fa fa-fw fa-github"></i>GitHub</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="/rss.xml" title="RSS → &#x2F;rss.xml"><i class="fa fa-fw fa-rss"></i>RSS</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2020</span>
+  <span class="with-love">
+    <i class="fa fa-user"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">周亮的博客</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> 强力驱动 v4.2.0
+  </div>
+  <span class="post-meta-divider">|</span>
+  <div class="theme-info">主题 – <a href="https://mist.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Mist</a> v7.7.0
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+<script>
+  NexT.utils.loadComments(document.querySelector('#disqus_thread'), () => {
+    if (window.DISQUS) {
+      DISQUS.reset({
+        reload: true,
+        config: {page: {
+            url: "http://zh-liang-cn.github.io/2012/06/28/easymock/",
+            identifier: "2012/06/28/easymock/",
+            title: "用EasyMock进行单元测试：什么是EasyMock"
+          }
+        }
+      });
+    } else {
+      var d = document, s = d.createElement('script');
+      s.src = 'https://zh-liang-cn.disqus.com/embed.js';
+      s.setAttribute('data-timestamp', '' + +new Date());
+      (d.head || d.body).appendChild(s);
+    }
+  });
+</script>
+
+</body>
+</html>
