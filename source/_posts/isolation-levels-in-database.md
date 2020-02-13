@@ -1,7 +1,7 @@
 ---
 title: 数据库的事务以及事务隔离级别
 excerpt: 数据库事务是数据库管理系统执行过程中的一个逻辑单位，包含了一个有限的数据库操作序列。事务不是天然存在的东西，它是被人为创造出来，目的是简化应用层的编程模型。数据库事务有两个目的：（1）定义一个逻辑单位，以便于当数据库从故障中恢复的时候能正确地恢复数据；（2）提供一种隔离方式，以便于解决多个客户端并发操作的时候出现的奇怪问题。
-date: 2020-01-05 22:11:26
+date: 2020-02-14 00:01:02
 tags: Database
 ---
 
@@ -141,7 +141,7 @@ delete from blogs where user_id = 100;
 commit;
 ```
 
-## 参考：
+## 参考
 
 * [Wikipedia - Database transaction](https://en.wikipedia.org/wiki/Database_transaction)
 * [Wikipedia - Isolation (database systems)](https://en.wikipedia.org/wiki/Isolation_(database_systems))
