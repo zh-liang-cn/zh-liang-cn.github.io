@@ -1,0 +1,234 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="X-UA-Compatible" content="IE=edge"><title>Git笔记 | 周亮的博客</title><meta name="description" content="Git笔记 - Liang"><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="icon" href="/favicon.png"><link rel="stylesheet" href="/css/theme.css"><link rel="search" type="application/opensearchdescription+xml" href="/atom.xml" title="周亮的博客"><meta name="generator" content="Hexo 5.4.0"><link rel="alternate" href="/atom.xml" title="周亮的博客" type="application/atom+xml">
+</head><body><div class="wrap"><header><h1 class="branding"><a href="/" title="周亮的博客">周亮的博客</a></h1><ul class="nav nav-list"><li class="nav-list-item"><a class="nav-list-link" href="/" target="_self">HOME</a></li><li class="nav-list-item"><a class="nav-list-link" href="/archives" target="_self">ARCHIVES</a></li><li class="nav-list-item"><a class="nav-list-link" href="https://github.com/zh-liang-cn/" target="_blank">GITHUB</a></li><li class="nav-list-item"><a class="nav-list-link" href="/atom.xml" target="_self">RSS</a></li></ul></header><main class="container"><div class="post"><article class="post-block"><h1 class="post-title">Git笔记</h1><div class="post-info"><a></a>2014-06-04</div><div class="post-content"><p>工作中越来越离不开 <a target="_blank" rel="noopener" href="http://git-scm.com/">git</a>，深感 <a target="_blank" rel="noopener" href="http://git-scm.com/">git</a> 的功能强大，基本上你会用到的、你能想到的功能都可以实现。本文是笔者遇到的问题以及解决方法的汇总，希望对读者有所帮助。</p>
+<h2 id="git工具"><a href="#git工具" class="headerlink" title="git工具"></a>git工具</h2><ul>
+<li>tig：控制台的GUI工具，通过<code>sudo apt-get install tig</code>或者<code>brew install tig</code>即可安装，强烈推荐</li>
+<li>gitk：GUI工具，使用tcl/tk编写，Ubuntu上默认已经安装了，直接在控制台执行<code>gitk</code>即可以启动</li>
+<li>SourceTree：著名的<a target="_blank" rel="noopener" href="https://www.atlassian.com/">Atlassian</a>的_免费_产品，支持Mac和Windows，但是_不_支持Linux，下载地址：<a target="_blank" rel="noopener" href="http://www.sourcetreeapp.com/">sourcetreeapp.com</a></li>
+</ul>
+<h2 id="只提交文件中的某几行改动而不是全部的改动"><a href="#只提交文件中的某几行改动而不是全部的改动" class="headerlink" title="只提交文件中的某几行改动而不是全部的改动"></a>只提交文件中的某几行改动而不是全部的改动</h2><p>执行<code>git add -p &lt;filename.java&gt;</code>命令，git会逐块（hunk）地询问你是否要提交这一块。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">Stage this hunk [y,n,q,a,d,/,j,J,g,s,e,?]? ??</span><br><span class="line">y - stage this hunk</span><br><span class="line">n - do not stage this hunk</span><br><span class="line">q - quit; do not stage this hunk nor any of the remaining ones</span><br><span class="line">a - stage this hunk and all later hunks in the file</span><br><span class="line">d - do not stage this hunk nor any of the later hunks in the file</span><br><span class="line">g - select a hunk to go to</span><br><span class="line">/ - search for a hunk matching the given regex</span><br><span class="line">j - leave this hunk undecided, see next undecided hunk</span><br><span class="line">J - leave this hunk undecided, see next hunk</span><br><span class="line">k - leave this hunk undecided, see previous undecided hunk</span><br><span class="line">K - leave this hunk undecided, see previous hunk</span><br><span class="line">s - split the current hunk into smaller hunks</span><br><span class="line">e - manually edit the current hunk</span><br><span class="line">? - print help</span><br></pre></td></tr></table></figure>
+
+<p>参考：</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="http://stackoverflow.com/questions/1085162/commit-only-part-of-a-file-in-git">Commit only part of a file in Git</a></li>
+</ul>
+<h2 id="Checkout远程分支"><a href="#Checkout远程分支" class="headerlink" title="Checkout远程分支"></a>Checkout远程分支</h2><pre><code>$ git checkout --track origin/daves_branch
+</code></pre>
+<p>这会创建一个名称 daves_branch 的本地分支</p>
+<p>参考：</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="http://stackoverflow.com/questions/9537392/git-fetch-remote-branch">http://stackoverflow.com/questions/9537392/git-fetch-remote-branch</a></li>
+</ul>
+<h2 id="将已经commit到本地但是还没push到远程仓库的commit拆分成多个commit"><a href="#将已经commit到本地但是还没push到远程仓库的commit拆分成多个commit" class="headerlink" title="将已经commit到本地但是还没push到远程仓库的commit拆分成多个commit"></a>将已经commit到本地但是还没push到远程仓库的commit拆分成多个commit</h2><p>如果是上一个commit，即HEAD~1，可以<code>git reset HEAD~1 --soft</code>，本地仓库会回到上一个commit提交前的状态，然后根据你的需要分成多个commit即可。</p>
+<p>如果是前几次commit，比如HEAD~3，可以按如下步骤：</p>
+<ul>
+<li>使用<code>git rebase -i HEAD~4</code>进入交互式rebase</li>
+<li>将你需要拆分的那个commit改成edit状态</li>
+<li>此时当前工作的commit是处于已经提交的状态，使用<code>git reset HEAD~1</code>将其恢复成提交前的状态</li>
+<li>根据你的需要分别使用<code>git add</code>和<code>git commit</code>提交</li>
+</ul>
+<p>这里：</p>
+<ul>
+<li>可以使用<code>git add -p &lt;file name&gt;</code>来实现对一个文件中修改分多次提交</li>
+<li>可以使用<code>git commit -c ORIG_HEAD</code>来重用拆分的那个commit的commit message</li>
+</ul>
+<p>参考：</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="http://stackoverflow.com/questions/1440050/how-to-split-last-commit-into-two-in-git">http://stackoverflow.com/questions/1440050/how-to-split-last-commit-into-two-in-git</a></li>
+<li><a target="_blank" rel="noopener" href="http://stackoverflow.com/questions/4307095/git-how-to-split-up-a-commit-buried-in-history">Git: How to split up a commit buried in history</a></li>
+</ul>
+<h2 id="撤销reset-rebase-cherry-pick-checkout-commit操作"><a href="#撤销reset-rebase-cherry-pick-checkout-commit操作" class="headerlink" title="撤销reset/rebase/cherry-pick/checkout/commit操作"></a>撤销reset/rebase/cherry-pick/checkout/commit操作</h2><p>使用<code>git reset HEAD~1</code>可以很方便的撤销上一次的commit，但是仍然将修改过的文件保存在缓存区，有时会想再将这个commit还原回来，这时该怎么办呢？</p>
+<p>Git实际上将HEAD的变动都保存在了reflog中，使用<code>git reflog</code>可以查看，你也可以认为git保存了所有的_commit_、_reset_、_rebase_、_cherry-pick_、_checkout_操作的历史记录，因此代码一旦commit就不用担心丢失了（除非删掉了本地库）。</p>
+<p>使用<code>git reflog</code>可以看到所有这些操作，然后使用<code>git reset</code></p>
+<pre><code>$ git reflog -5
+c60995b HEAD@&#123;0&#125;: rebase -i (finish): returning to refs/heads/master
+c60995b HEAD@&#123;1&#125;: rebase -i (pick): add d
+91c3a01 HEAD@&#123;2&#125;: commit: add c
+9ac23cf HEAD@&#123;3&#125;: commit: add b
+38b72b4 HEAD@&#123;4&#125;: reset: moving to HEAD~1
+</code></pre>
+<p>如果需要回到<code>91c3a01 HEAD@&#123;2&#125;: commit: add c</code>这个commit，直接执行<code>git reset 91c3a01</code>或者更加直观<code>git reset HEAD@&#123;2&#125;</code>即可。</p>
+<p>这里的<code>-5</code>意思是只显示5行，<code>git log -5</code>也只显示最近5个commit的log</p>
+<p>参考</p>
+<ul>
+<li>[<a target="_blank" rel="noopener" href="http://stackoverflow.com/questions/2510276/undoing-git-reset]">http://stackoverflow.com/questions/2510276/undoing-git-reset]</a>(Undoing git reset?)</li>
+<li><a target="_blank" rel="noopener" href="http://gitready.com/intermediate/2009/02/09/reflog-your-safety-net.html">reflog, your safety net</a></li>
+</ul>
+<h2 id="git-co与git-st命令是怎么回事"><a href="#git-co与git-st命令是怎么回事" class="headerlink" title="git co与git st命令是怎么回事"></a><code>git co</code>与<code>git st</code>命令是怎么回事</h2><p>git允许定义命令的别名，根据约定俗成，这里<code>co</code>是<code>checkout</code>的别名、<code>st</code>是<code>status</code>的别名，也就是说可以使用<code>git co</code>来替代<code>git checkout</code>命令。</p>
+<p>有两种方法可以添加这种别名，第一种是直接编辑_~/.gitconfig_文件，如下</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">[alias]</span><br><span class="line">  co = checkout</span><br><span class="line">  ci = commit</span><br><span class="line">  st = status</span><br><span class="line">  br = branch</span><br><span class="line">  hist = log --pretty=format:\&quot;%h %ad | %s%d [%an]\&quot; --graph --date=short</span><br><span class="line">  type = cat-file -t</span><br><span class="line">  dump = cat-file -p</span><br></pre></td></tr></table></figure>
+
+<p>第二种是通过<code>git config</code>命令来配置，依次执行：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">git config --global alias.co checkout</span><br><span class="line">git config --global alias.ci commit</span><br><span class="line">git config --global alias.st status</span><br><span class="line">git config --global alias.br branch</span><br><span class="line">git config --global alias.hist &#x27;log --pretty=format:&quot;%h %ad | %s%d [%an]&quot; --graph --date=short&#x27;</span><br><span class="line">git config --global alias.type &#x27;cat-file -t&#x27;</span><br><span class="line">git config --global alias.dump &#x27;cat-file -p&#x27;</span><br></pre></td></tr></table></figure>
+
+<h2 id="取出某个特定文件的某个特定版本"><a href="#取出某个特定文件的某个特定版本" class="headerlink" title="取出某个特定文件的某个特定版本"></a>取出某个特定文件的某个特定版本</h2><p><code>git checkout</code>命令用来切换分支，会取出整个分支的代码，但是也可以用来取出某个特定的文件：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git checkout &lt;commit SHA&gt; &lt;filepath&gt;</span><br></pre></td></tr></table></figure>
+
+<h2 id="设置commit-message模板"><a href="#设置commit-message模板" class="headerlink" title="设置commit message模板"></a>设置commit message模板</h2><p>将commit message写到一个文件中，然后执行：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git config --global commit.template ~/.git.commit.template</span><br></pre></td></tr></table></figure>
+
+<h2 id="将commit从一个repo移动到另一个repo"><a href="#将commit从一个repo移动到另一个repo" class="headerlink" title="将commit从一个repo移动到另一个repo"></a>将commit从一个repo移动到另一个repo</h2><p>使用_git format-patch_命令会为每一个commit生成一个patch文件，然后使用_git apply_命令将生成额patch文件应用到另一个仓库：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">git format-patch &lt;first commit SHA&gt;~..&lt;first commit SHA&gt;</span><br><span class="line">git apply &lt;path to patch&gt;</span><br></pre></td></tr></table></figure>
+
+<p>参考：</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://www.kernel.org/pub/software/scm/git/docs/git-format-patch.html">git-format-patch(1) Manual Page</a></li>
+<li><a target="_blank" rel="noopener" href="https://www.kernel.org/pub/software/scm/git/docs/git-apply.html">git-apply(1) Manual Page</a></li>
+<li><a target="_blank" rel="noopener" href="http://makandracards.com/makandra/5531-git-move-a-commit-between-repositories">Git: Move a commit between repositories</a></li>
+</ul>
+<h2 id="忽略文件夹"><a href="#忽略文件夹" class="headerlink" title="忽略文件夹"></a>忽略文件夹</h2><p>只需要将文件夹名称加入_.gitignore_文件即可，注意，所有子文件夹下的这个目录都会被忽略，除非</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">config/                 # 忽略config/文件夹</span><br><span class="line">!configuration/config/  # 不要忽略configuration文件夹下的config文件夹</span><br></pre></td></tr></table></figure>
+
+<p>参考：</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://www.kernel.org/pub/software/scm/git/docs/gitignore.html">gitignore(5) Manual Page</a></li>
+</ul>
+<h2 id="git-stash-命令"><a href="#git-stash-命令" class="headerlink" title="git stash 命令"></a>git stash 命令</h2><p><code>git stash</code>命令可以将改动暂存起来:</p>
+<pre><code>$ git stash
+$ git stash pop
+ $ git stash list
+$ git stash drop
+</code></pre>
+<p>查看stash中的改动：</p>
+<pre><code>$ git stash show
+$ git stash show -p
+$ git stash show -p stash @&#123;1&#125;
+</code></pre>
+<p>参考：</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="http://stackoverflow.com/questions/10725729/git-see-whats-in-a-stash-without-applying-stash">Git: see what’s in a stash without applying stash</a></li>
+</ul>
+<h2 id="push本地的某个commit"><a href="#push本地的某个commit" class="headerlink" title="push本地的某个commit"></a>push本地的某个commit</h2><p>如果临时做了一个patch，只希望push这一个commit到repo中:</p>
+<pre><code>$ git push &lt;remotename&gt; &lt;commit SHA&gt;:&lt;remotebranchname&gt;
+</code></pre>
+<p>参考：</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="http://stackoverflow.com/questions/3230074/git-pushing-specific-commit">git - pushing specific commit</a></li>
+</ul>
+<h2 id="git远程分支操作"><a href="#git远程分支操作" class="headerlink" title="git远程分支操作"></a>git远程分支操作</h2><h3 id="push本地分支到repo"><a href="#push本地分支到repo" class="headerlink" title="push本地分支到repo"></a>push本地分支到repo</h3><p>在本地创建了一个分支后，需要将这个分支push到远程repo中：</p>
+<pre><code>$ git push origin new_feature
+</code></pre>
+<h3 id="删除远程repo中的分支"><a href="#删除远程repo中的分支" class="headerlink" title="删除远程repo中的分支"></a>删除远程repo中的分支</h3><pre><code>$ git push origin :new_feature # 注意里面的冒号
+</code></pre>
+<p>参考：</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="http://gitready.com/beginner/2009/02/02/push-and-delete-branches.html">push and delete remote branches</a></li>
+</ul>
+<h3 id="将本地分支恢复到远程仓库的HEAD状态"><a href="#将本地分支恢复到远程仓库的HEAD状态" class="headerlink" title="将本地分支恢复到远程仓库的HEAD状态"></a>将本地分支恢复到远程仓库的HEAD状态</h3><pre><code>$ git fetch origin
+$ git reset --hard origin/mainline
+$ git clean -f -d
+</code></pre>
+<p>其中：_-f_表示_force_，_-d_表示_clean directory_</p>
+<p>参考：</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="http://ocpsoft.org/tutorials/git/reset-and-sync-local-respository-with-remote-branch/">Reset and sync local respository with remote branch</a></li>
+</ul>
+<h3 id="只merge另一个分支的某个commit"><a href="#只merge另一个分支的某个commit" class="headerlink" title="只merge另一个分支的某个commit"></a>只merge另一个分支的某个commit</h3><p>使用_git cherry-pick_命令：</p>
+<pre><code>$ git cherry-pick &lt;commit SHA&gt;
+</code></pre>
+<p>参考：</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="http://stackoverflow.com/questions/881092/how-to-merge-a-specific-commit-in-git">How to merge a specific commit in git</a></li>
+</ul>
+<h2 id="删除还未push的commit"><a href="#删除还未push的commit" class="headerlink" title="删除还未push的commit"></a>删除还未push的commit</h2><p>_HEAD~1_表示恢复到上一个版本，这里可以替换成commit的SHA值：</p>
+<pre><code>$ git reset --hard HEAD~1
+</code></pre>
+<h2 id="修改还未push的上一次commit"><a href="#修改还未push的上一次commit" class="headerlink" title="修改还未push的上一次commit"></a>修改还未push的上一次commit</h2><p>如果需要对刚刚提交到本地repo的commit进行修改：</p>
+<pre><code>$ git reset --soft HEAD^
+$ do some change
+$ git add -A
+$ git commit -c ORIG_HEAD
+</code></pre>
+<p>参考：</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="http://stackoverflow.com/questions/927358/how-to-undo-the-last-git-commit">How to undo the last Git commit?</a></li>
+</ul>
+<h2 id="生成SSH-public-keys"><a href="#生成SSH-public-keys" class="headerlink" title="生成SSH public keys"></a>生成SSH public keys</h2><pre><code>$ ssh-keygen -t rsa
+</code></pre>
+<p>参考：</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://help.github.com/articles/set-up-git">Set Up Git</a></li>
+</ul>
+<h2 id="本地分支"><a href="#本地分支" class="headerlink" title="本地分支"></a>本地分支</h2><h3 id="显示本地分支信息"><a href="#显示本地分支信息" class="headerlink" title="显示本地分支信息"></a>显示本地分支信息</h3><pre><code>$ git branch
+* master
+</code></pre>
+<h3 id="创建新的branch"><a href="#创建新的branch" class="headerlink" title="创建新的branch"></a>创建新的branch</h3><pre><code>$ git branch testing
+$ git branch
+* master
+  testing
+</code></pre>
+<h3 id="切换到新创建的branch"><a href="#切换到新创建的branch" class="headerlink" title="切换到新创建的branch"></a>切换到新创建的branch</h3><pre><code>$ git checkout testing
+$ git branch
+  master
+* testing
+</code></pre>
+<h3 id="创建branch的同时切换到新创建的branch"><a href="#创建branch的同时切换到新创建的branch" class="headerlink" title="创建branch的同时切换到新创建的branch"></a>创建branch的同时切换到新创建的branch</h3><pre><code>$ git checkout -b testing2
+$ git branch
+  master
+  testing
+* testing2
+</code></pre>
+<h3 id="删除branch"><a href="#删除branch" class="headerlink" title="删除branch"></a>删除branch</h3><pre><code>$ git branch -d testing
+$ git branch
+  master
+* testing2
+</code></pre>
+<h3 id="合并分支"><a href="#合并分支" class="headerlink" title="合并分支"></a>合并分支</h3><pre><code>$ git branch master
+$ git branch
+* master
+  testing2
+$ git merge testing2
+</code></pre>
+<p>参考：</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="http://gitref.org/branching/">http://gitref.org/branching/</a></li>
+<li><a target="_blank" rel="noopener" href="http://darrinholst.com/post/359817782">http://darrinholst.com/post/359817782</a></li>
+</ul>
+<h2 id="修改最近一次提交的message"><a href="#修改最近一次提交的message" class="headerlink" title="修改最近一次提交的message"></a>修改最近一次提交的message</h2><p>使用_git commit_的_–amend_参数：</p>
+<p>  git commit –amend -m “some other message”</p>
+<p>修改前几次提交的但是还没push到remote repository的commit的message</p>
+<pre><code>$ git lg
+* 6119426 - (master) third commit (3 seconds ago by Darrin Holst)
+* b6a0a9f - we want to change this message (23 seconds ago by Darrin Holst)
+* e24b57d - first commit (37 seconds ago by Darrin Holst)
+</code></pre>
+<h2 id="交互式rebase"><a href="#交互式rebase" class="headerlink" title="交互式rebase"></a>交互式rebase</h2><p>使用_git rebase_的_-i_参数：</p>
+<pre><code>$ git rebase -i HEAD~2
+</code></pre>
+<p>将在编辑器中打开：</p>
+<pre><code>pick b6a0a9f we want to change this message
+pick 6119426 third commit
+
+# Rebase e24b57d..6119426 onto e24b57d
+#
+# Commands:
+#  p, pick = use commit
+#  e, edit = use commit, but stop for amending
+#  s, squash = use commit, but meld into previous commit
+</code></pre>
+<p>将第一个commit改成edit：</p>
+<pre><code>Change “pick” to “edit” for those that you want to edit and save that file
+
+edit b6a0a9f we want to change this message
+pick 6119426 third commit
+
+# Rebase e24b57d..6119426 onto e24b57d
+#
+# Commands:
+#  p, pick = use commit
+#  e, edit = use commit, but stop for amending
+#  s, squash = use commit, but meld into previous commit
+</code></pre>
+<p>进行相应的修改：</p>
+<pre><code>Now amend that commit
+
+$ git commit --amend -m &quot;some other message&quot;
+</code></pre>
+<p>接着继续rebase操作：</p>
+<pre><code>$ git rebase --continue
+$ git lg
+* cec3fba - (master) third commit (2 seconds ago by Darrin Holst)
+* c146f90 - some other message (29 seconds ago by Darrin Holst)
+* e24b57d - first commit (5 minutes ago by Darrin Holst)
+</code></pre>
+</div></article></div></main><footer><div class="paginator"><a class="prev" href="/2018/05/18/declarative-language/">prev</a><a class="next" href="/2014/05/23/linux-mount-command/">next</a></div><div class="copyright"><p>&copy; 2012 - 2021 <a href="https://zh-liang-cn.github.io">Liang</a>.<br>Powered by <a href="https://hexo.io/" target="_blank">Hexo</a> &amp; <a href="https://github.com/Dreyer/hexo-theme-artemis" target="_blank">Artemis</a>.</p></div></footer></div></body></html>

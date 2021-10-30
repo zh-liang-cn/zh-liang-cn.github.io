@@ -1,0 +1,34 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="X-UA-Compatible" content="IE=edge"><title>MySQL查询优化：tmp_table_size与max_heap_table_size | 周亮的博客</title><meta name="description" content="MySQL查询优化：tmp_table_size与max_heap_table_size - Liang"><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="icon" href="/favicon.png"><link rel="stylesheet" href="/css/theme.css"><link rel="search" type="application/opensearchdescription+xml" href="/atom.xml" title="周亮的博客"><meta name="generator" content="Hexo 5.4.0"><link rel="alternate" href="/atom.xml" title="周亮的博客" type="application/atom+xml">
+</head><body><div class="wrap"><header><h1 class="branding"><a href="/" title="周亮的博客">周亮的博客</a></h1><ul class="nav nav-list"><li class="nav-list-item"><a class="nav-list-link" href="/" target="_self">HOME</a></li><li class="nav-list-item"><a class="nav-list-link" href="/archives" target="_self">ARCHIVES</a></li><li class="nav-list-item"><a class="nav-list-link" href="https://github.com/zh-liang-cn/" target="_blank">GITHUB</a></li><li class="nav-list-item"><a class="nav-list-link" href="/atom.xml" target="_self">RSS</a></li></ul></header><main class="container"><div class="post"><article class="post-block"><h1 class="post-title">MySQL查询优化：tmp_table_size与max_heap_table_size</h1><div class="post-info"><a></a>2014-04-18</div><div class="post-content"><p>对于某些query，MySQL会创建临时表来进行处理，临时表有两种：</p>
+<ul>
+<li>基于<strong>MEMORY</strong>存储引擎的临时<strong>内存表</strong></li>
+<li>基于<strong>MyISAM</strong>存储引擎的临时<strong>磁盘表</strong></li>
+</ul>
+<p>当临时<strong>内存表</strong>的大小达到一定限制的时候，MySQL就会将临时内存表写入到磁盘，变为临时<strong>磁盘表</strong>。</p>
+<p>这个限制由<code>tmp_table_size</code>和<code>max_heap_table_size</code>这两个变量中的最小值确定。</p>
+<blockquote>
+<p>注意，用于使用<code>create table</code>创建的内存表和这里提到的临时内存表不一样，前者的大小仅仅只受<code>max_heap_table_size</code>来限制，而且永远不会出现超过大小限制会写入到磁盘。</p>
+</blockquote>
+<p>有这么几种情况会出现临时内存表：</p>
+<ul>
+<li>包含<code>UNION</code>的query；</li>
+<li>使用了<code>UNION</code>或者聚合运算的视图，有个算法专门用于判定一个视图是不是会使用临时表：<a target="_blank" rel="noopener" href="http://dev.mysql.com/doc/refman/5.0/en/view-algorithms.html">view-algorithms</a>；</li>
+<li>如果query包含<code>order by</code>和<code>group by</code>子句，并且两个子句中的字段不一样；或者<code>order by</code>或者<code>group by</code>中包含除了第一张表中的字段；</li>
+<li>query中同时包含<code>distinct</code>和<code>order by</code>。</li>
+</ul>
+<p>如果一个query的explain结果中的extra字段包含<code>using temporary</code>，说明这个query使用了临时表。</p>
+<blockquote>
+<p>使用explain的时候extra里面如果输出<code>using temporary;</code>说明需要使用临时表，但是这里无论如何都看不出来是不是使用了磁盘临时表（因为是不是使用磁盘临时表要根据query结果的大小来判定，在SQL分析阶段是无法判定的），<code>using filesort</code>是说没办法使用索引进行排序（<code>order by</code>和<code>group by</code>都需要排序），只能对输出结果进行quicksort，参考<a target="_blank" rel="noopener" href="http://www.mysqlperformanceblog.com/2009/03/05/what-does-using-filesort-mean-in-mysql/">what-does-using-filesort-mean-in-mysql</a></p>
+</blockquote>
+<p>当MySQL处理query是创建了一个临时表（不论是内存临时表还是磁盘临时表），<code>created_tmp_tables</code>变量都会增加1。如果创建了一个磁盘临时表，<code>created_tmp_disk_tables</code>会增加1。<br>可以通过<code>show session status like &#39;Created_tmp_%&#39;;</code> 来查看，如果要查看全局的临时表使用次数，将其中的_session_改为_global_即可。<br>一般磁盘临时表会比内存临时表慢，因此要尽可能避免出现磁盘临时表。下面几种情况下，MySQL会直接使用磁盘内存表，要尽可能避免：</p>
+<ul>
+<li>表中包含了<code>BLOB</code>和<code>TEXT</code>字段（MEMORY引擎不支持这两种字段）；</li>
+<li><code>group by</code>和<code>distinct</code>子句中的有超过512字节的字段；</li>
+<li><code>UNION</code>以及<code>UNION ALL</code>语句中，如果<code>SELECT</code>子句中包含了超过512（对于binary string是512字节，对于character是512个字符）的字段。</li>
+</ul>
+<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><ul>
+<li><a target="_blank" rel="noopener" href="http://www.mysqlperformanceblog.com/2007/01/19/tmp_table_size-and-max_heap_table_size/">http://www.mysqlperformanceblog.com/2007/01/19/tmp_table_size-and-max_heap_table_size/</a></li>
+<li><a target="_blank" rel="noopener" href="http://dev.mysql.com/doc/refman/5.0/en/view-algorithms.html">http://dev.mysql.com/doc/refman/5.0/en/view-algorithms.html</a></li>
+<li><a target="_blank" rel="noopener" href="http://www.mysqlperformanceblog.com/2009/03/05/what-does-using-filesort-mean-in-mysql/">http://www.mysqlperformanceblog.com/2009/03/05/what-does-using-filesort-mean-in-mysql/</a></li>
+</ul>
+</div></article></div></main><footer><div class="paginator"><a class="prev" href="/2014/05/23/linux-mount-command/">prev</a><a class="next" href="/2014/02/12/dig-command-in-linux/">next</a></div><div class="copyright"><p>&copy; 2012 - 2021 <a href="https://zh-liang-cn.github.io">Liang</a>.<br>Powered by <a href="https://hexo.io/" target="_blank">Hexo</a> &amp; <a href="https://github.com/Dreyer/hexo-theme-artemis" target="_blank">Artemis</a>.</p></div></footer></div></body></html>

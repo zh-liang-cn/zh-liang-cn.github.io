@@ -1,0 +1,108 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="X-UA-Compatible" content="IE=edge"><title>用Python的pulp库求解线性规划问题 | 周亮的博客</title><meta name="description" content="用Python的pulp库求解线性规划问题 - Liang"><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="icon" href="/favicon.png"><link rel="stylesheet" href="/css/theme.css"><link rel="search" type="application/opensearchdescription+xml" href="/atom.xml" title="周亮的博客"><meta name="generator" content="Hexo 5.4.0"><link rel="alternate" href="/atom.xml" title="周亮的博客" type="application/atom+xml">
+</head><body><div class="wrap"><header><h1 class="branding"><a href="/" title="周亮的博客">周亮的博客</a></h1><ul class="nav nav-list"><li class="nav-list-item"><a class="nav-list-link" href="/" target="_self">HOME</a></li><li class="nav-list-item"><a class="nav-list-link" href="/archives" target="_self">ARCHIVES</a></li><li class="nav-list-item"><a class="nav-list-link" href="https://github.com/zh-liang-cn/" target="_blank">GITHUB</a></li><li class="nav-list-item"><a class="nav-list-link" href="/atom.xml" target="_self">RSS</a></li></ul></header><main class="container"><div class="post"><article class="post-block"><h1 class="post-title">用Python的pulp库求解线性规划问题</h1><div class="post-info"><a></a>2020-01-19</div><div class="post-content"><p>线性规划（Linear planning 或者 Linear programming）是最常见的优化技术，在运筹学（operation research）、规划（planning）等领域有很多的应用场景。虽然不像机器学习那样被大肆宣传，但是对可以通过具有线性关系的决策变量来表达的问题而言却是最首选的方法。</p>
+<p><a target="_blank" rel="noopener" href="https://book.douban.com/subject/26731100/">《数据、模型与决策：基于电子表格的建模和案例研究方法》</a>介绍了通过 Excel 来求解线性规划问题，本文介绍如何通过 Python 的 pulp 库来进行求解。</p>
+<h3 id="问题描述"><a href="#问题描述" class="headerlink" title="问题描述"></a>问题描述</h3><p>案例来源于<a target="_blank" rel="noopener" href="https://book.douban.com/subject/26731100/">《数据、模型与决策：基于电子表格的建模和案例研究方法》</a>中第3章的超级食品公司的广告组合问题。</p>
+<p>该公司雇佣了一家广告公司来帮助设计全国性促销活动，<strong>以得到更多消费者的认可</strong>，该公司将根据广告公司所提供的服务给予一定的酬金，酬金预算不超过100万美元，投放的广告预算不超过400万美元。有三种广告媒介可以选择：周六增刊广告、杂志广告、电视广告。由于电视广告资源有限，只有5个时段可以投放。</p>
+<p>广告成本如下：（单位：千美元）</p>
+<table>
+<thead>
+<tr>
+<th>成本分类</th>
+<th>每次电视广告</th>
+<th>每次杂志广告</th>
+<th>每次周日增刊广告</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>广告预算</td>
+<td>300</td>
+<td>150</td>
+<td>100</td>
+</tr>
+<tr>
+<td>规划预算</td>
+<td>90</td>
+<td>30</td>
+<td>40</td>
+</tr>
+</tbody></table>
+<p>广告媒介受众数量：（单位：千）</p>
+<table>
+<thead>
+<tr>
+<th></th>
+<th>每次电视广告</th>
+<th>每次杂志广告</th>
+<th>每次周六增刊广告</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>广告受众期望值</td>
+<td>1300</td>
+<td>600</td>
+<td>500</td>
+</tr>
+</tbody></table>
+<p>解决一个线性规划，有如下三步：</p>
+<ol>
+<li>找出决策变量（decision variable）</li>
+<li>确定约束条件（functional constraint）</li>
+<li>目标函数（objective function）</li>
+</ol>
+<h3 id="安装和起步"><a href="#安装和起步" class="headerlink" title="安装和起步"></a>安装和起步</h3><p>通过 pip 安装 pulp：</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">pip install pulp</span><br></pre></td></tr></table></figure>
+
+<p>首先要创建一个<code>LpProblem</code>对象：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> pulp <span class="keyword">import</span> *</span><br><span class="line"></span><br><span class="line">problem = LpProblem(<span class="string">&quot;Ads Optimization&quot;</span>, LpMaximize)</span><br></pre></td></tr></table></figure>
+
+<p>第二个参数<code>LpMaximize</code>表示这个问题属于最大化问题。相应地，<code>LpMinimize</code> 则表示这个问题属于最小化问题。</p>
+<p><code>LpProblem</code> 就像一个容器，后面会将 __决策变量__、 <strong>约束条件</strong> 和 <strong>目标函数</strong> 都放到这个容器中。</p>
+<h3 id="决策变量"><a href="#决策变量" class="headerlink" title="决策变量"></a>决策变量</h3><p>第二步是定义决策变量，pulp 中定义决策变量的方式：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">variable = LpVariable(<span class="string">&quot;variableName&quot;</span>)</span><br></pre></td></tr></table></figure>
+
+<p>默认是不设置上限和下限的，如果需要指定这个变量的上限和下限：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">var = LpVariable(name, lowBound=<span class="literal">None</span>, upBound=<span class="literal">None</span>, cat=<span class="string">&#x27;Continuous&#x27;</span>, e=<span class="literal">None</span>)</span><br></pre></td></tr></table></figure>
+
+<p><code>cat</code>表示Category，有三种：Integer, Binary 和 Continuous，默认是 Continuous。</p>
+<p>如果决策变量比较多，而且这些决策变量属于同一种类型，也有相同的上限和下限，那么可以使用<code>dicts()</code>方法来统一创建：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">varDict = dicts(name, indexs, lowBound=<span class="literal">None</span>, upBound=<span class="literal">None</span>, cat=<span class="string">&#x27;Continuous&#x27;</span>, indexStart=[])</span><br></pre></td></tr></table></figure>
+
+<p>这个例子中，一共有三个 决策变量，其中电视广告投放量是有上限约束的，其他两个则没有：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">tv = LpVariable(<span class="string">&quot;TV&quot;</span>, lowBound=<span class="number">0</span>, upBound=<span class="number">5</span>)</span><br><span class="line">m = LpVariable(<span class="string">&quot;Magazine&quot;</span>, lowBound=<span class="number">0</span>)</span><br><span class="line">ss = LpVariable(<span class="string">&quot;SS&quot;</span>, lowBound=<span class="number">0</span>)</span><br></pre></td></tr></table></figure>
+
+<h3 id="约束条件"><a href="#约束条件" class="headerlink" title="约束条件"></a>约束条件</h3><p>接着使用决策变量来设置约束条件，这个例子中一共有两个约束条件：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">c1 = <span class="number">300</span> * tv + <span class="number">150</span> * m + <span class="number">100</span> * ss &lt;= <span class="number">4000</span></span><br><span class="line">c2 = <span class="number">90</span> * tv + <span class="number">30</span> * m + <span class="number">40</span> * ss &lt;= <span class="number">1000</span></span><br><span class="line"></span><br><span class="line">problem += c1</span><br><span class="line">problem += c2</span><br></pre></td></tr></table></figure>
+
+<p>注意 <code>c1</code> 和 <code>c2</code> 实际上是一个表达式，最后则通过 <code>+=</code> 将两个约束条件添加到 <code>LpProblem</code> 对象中。</p>
+<h3 id="目标函数"><a href="#目标函数" class="headerlink" title="目标函数"></a>目标函数</h3><p>这个例子中，目标函数是广告整体的受众数量，可以通过第二个表格计算：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">obj = <span class="number">1300</span> * tv + <span class="number">600</span> * m + <span class="number">500</span> * ss</span><br><span class="line"></span><br><span class="line">problem += obj</span><br></pre></td></tr></table></figure>
+
+<p>最后仍然是通过 <code>+=</code> 将目标函数添加到 <code>LpProblem</code> 对象中。</p>
+<p>如果要看下整个线性规划问题的定义：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">print</span>(problem)</span><br></pre></td></tr></table></figure>
+
+<p>输出如下，非常容易理解：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">AdsOptimization:</span><br><span class="line">MAXIMIZE</span><br><span class="line">600*Magazine + 500*SS + 1300*TV + 0</span><br><span class="line">SUBJECT TO</span><br><span class="line">_C1: 150 Magazine + 100 SS + 300 TV &lt;= 4000</span><br><span class="line"></span><br><span class="line">_C2: 30 Magazine + 40 SS + 90 TV &lt;= 1000</span><br><span class="line"></span><br><span class="line">VARIABLES</span><br><span class="line">Magazine free Continuous</span><br><span class="line">SS free Continuous</span><br><span class="line">TV &lt;= 5 Continuous</span><br></pre></td></tr></table></figure>
+
+<h3 id="求解"><a href="#求解" class="headerlink" title="求解"></a>求解</h3><p>准备好之后，通过调用 <code>solve()</code> 方法进行求解，返回 1 表示问题解决了，返回 -1 表示无法求解。</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">problem.solve()</span><br></pre></td></tr></table></figure>
+
+<p>通过<code>LpVariable.varValue</code>属性来获取找到的最优解：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">print</span>(tv.name + <span class="string">&quot; : &quot;</span> + <span class="built_in">str</span>(tv.varValue))</span><br><span class="line"><span class="built_in">print</span>(m.name + <span class="string">&quot; : &quot;</span> + <span class="built_in">str</span>(m.varValue))</span><br><span class="line"><span class="built_in">print</span>(ss.name + <span class="string">&quot; : &quot;</span> + <span class="built_in">str</span>(ss.varValue))</span><br></pre></td></tr></table></figure>
+
+<p>输出的最优解为：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">TV : 0.0</span><br><span class="line">Magazine : 20.0</span><br><span class="line">SS : 10.0</span><br></pre></td></tr></table></figure>
+
+<p>即不采用任何电视广告、投放20次杂志广告、投放10次周六增刊广告。</p>
+<p><code>pulp.value()</code> 函数用于获取最终的目标函数值，这个例子中总的收益为：</p>
+<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">total_user = <span class="built_in">int</span>(value(problem.objective))</span><br><span class="line"><span class="built_in">print</span>(<span class="string">&quot;Total users: &quot;</span> + <span class="built_in">str</span>(total_user))</span><br></pre></td></tr></table></figure>
+
+<p>输出为：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Total users: 17000</span><br></pre></td></tr></table></figure>
+<p>也就是说这个广告投放组合可以带来17000千人次的广告受众量。</p>
+<h3 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h3><ul>
+<li><a target="_blank" rel="noopener" href="https://pythonhosted.org/PuLP/pulp.html">Pulp函数库参考</a></li>
+<li><a target="_blank" rel="noopener" href="https://hackernoon.com/linear-programming-in-python-a-straight-forward-tutorial-a0d152618121">Linear Programming in Python</a></li>
+<li><a target="_blank" rel="noopener" href="https://towardsdatascience.com/linear-programming-and-discrete-optimization-with-python-using-pulp-449f3c5f6e99">Linear programming and discrete optimization with Python using PuLP</a></li>
+</ul>
+</div></article></div></main><footer><div class="paginator"><a class="prev" href="/2020/02/14/isolation-levels-in-database/">prev</a><a class="next" href="/2018/08/17/clean-code/">next</a></div><div class="copyright"><p>&copy; 2012 - 2021 <a href="https://zh-liang-cn.github.io">Liang</a>.<br>Powered by <a href="https://hexo.io/" target="_blank">Hexo</a> &amp; <a href="https://github.com/Dreyer/hexo-theme-artemis" target="_blank">Artemis</a>.</p></div></footer></div></body></html>

@@ -1,0 +1,98 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="X-UA-Compatible" content="IE=edge"><title>Linux dig 命令详解 | 周亮的博客</title><meta name="description" content="Linux dig 命令详解 - Liang"><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="icon" href="/favicon.png"><link rel="stylesheet" href="/css/theme.css"><link rel="search" type="application/opensearchdescription+xml" href="/atom.xml" title="周亮的博客"><meta name="generator" content="Hexo 5.4.0"><link rel="alternate" href="/atom.xml" title="周亮的博客" type="application/atom+xml">
+</head><body><div class="wrap"><header><h1 class="branding"><a href="/" title="周亮的博客">周亮的博客</a></h1><ul class="nav nav-list"><li class="nav-list-item"><a class="nav-list-link" href="/" target="_self">HOME</a></li><li class="nav-list-item"><a class="nav-list-link" href="/archives" target="_self">ARCHIVES</a></li><li class="nav-list-item"><a class="nav-list-link" href="https://github.com/zh-liang-cn/" target="_blank">GITHUB</a></li><li class="nav-list-item"><a class="nav-list-link" href="/atom.xml" target="_self">RSS</a></li></ul></header><main class="container"><div class="post"><article class="post-block"><h1 class="post-title">Linux dig 命令详解</h1><div class="post-info"><a></a>2014-02-12</div><div class="post-content"><p>之所以会关注到这个命令，是因为最近在研究 <a target="_blank" rel="noopener" href="http://zhouliang.pro/2014/01/19/mysql-master-slave-replication/">MySQL的主从复制</a> 相关的技术，希望能实现当Slave落后Master比较多的时候自动将Slave从数据源中去除掉的功能。找了很多资料，没有比较好的现成办法。只能参考 <a target="_blank" rel="noopener" href="http://www.percona.com/software/percona-toolkit">percona-toolkit</a> 中的 <a target="_blank" rel="noopener" href="http://www.percona.com/doc/percona-toolkit/2.1/pt-heartbeat.html">pt-heartbeat</a> 命令的实现自己来做，这个完全可以写另一篇博客了，暂且不提罢。</p>
+<p>我们每台MySQL服务器都部署有监控用的程序，我希望把这个发送heartbeat的程序集成到监控程序中，但这个程序只需要在Master机器上启动，这就涉及到如何确定这台MySQL服务器是Master还是Slave了，有一些<a target="_blank" rel="noopener" href="http://dba.stackexchange.com/questions/46011/how-to-determine-master-in-mysql-master-slave">办法</a>，但是都不算太好，因为MySQL的一个Slave机器也可以作为另一个Slave的Master，比较拗口，大意就是你的你的儿子也是你的孙子的爸爸。</p>
+<p>好在我们的MySQL服务器都绑定着CNAME，访问一台MySQL服务器的时候，使用的是对应的CNAME，而不是那台机器的IP或者主机名（可以通过<code>hostname</code>命令查看，因此下文称为hostname），比如Master的机器是 <code>abcedfg.xxx.com</code>，但是我们另外绑定了<code>master.db.xxx.com</code> 域名，Slave机器是 <code>hijklmn.xxx.com</code>，我们绑定了 <code>slave-1.db.xxx.com</code> 域名。</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">    <span class="attr">&quot;master&quot;</span> : <span class="string">&quot;master.db.xxx.com&quot;</span>,</span><br><span class="line">    <span class="attr">&quot;slaves&quot;</span> : [<span class="string">&quot;slave-1.db.xxx.com&quot;</span>, <span class="string">&quot;slave-1.db.xxx.com&quot;</span>]</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>所以我用了一个比较奇怪的方法：通过CNAME来查找Master的hostname，如果运行该heartbeat程序的机器的hostname和刚查找到的Master的hostname一致，则说明该程序运行于一台Master机器，否者就直接退出。</p>
+<p>因此，问题转变成如何通过CNAME来查找一个域名其真正指向的服务器的hostname。这里，我直观的想到可以用Linux的<code>dig</code>命令来解决这个问题。需要注意的是，除了这个命令以外，很多编程语言库都提供相应的支持，比如Java的<a target="_blank" rel="noopener" href="http://download.java.net/jdk7/archive/b123/docs/api/java/net/InetAddress.html">InetAddress</a>就可以实现<a target="_blank" rel="noopener" href="http://stackoverflow.com/questions/3371879/ip-address-to-hostname-in-java">通过IP地址查找对应的域名</a>：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">InetAddress addr = InetAddress.getByName(<span class="string">&quot;8.8.8.8&quot;</span>);</span><br><span class="line">String host = addr.getHostName();</span><br><span class="line">System.out.println(host);</span><br></pre></td></tr></table></figure>
+
+<h2 id="CNAME"><a href="#CNAME" class="headerlink" title="CNAME"></a>CNAME</h2><p>可能需要先大概介绍一下什么是CNAME：一个域名可以有两种类型的指向，如果一个<strong>域名指向</strong>称为一个<strong>记录（Record）</strong>的话，那么就有两种<strong>记录类型（Record Type）</strong>，分别是：</p>
+<ul>
+<li><strong>A记录</strong>：指向一个IP地址</li>
+<li><strong>CNAME</strong>：指向一个其他的域名</li>
+</ul>
+<p>下面这个图是我的域名的配置：</p>
+<p><a target="_blank" rel="noopener" href="https://www.flickr.com/photos/zhlwish/14022922767/" title="Flickr 上 zhlwish 的 cname-settings"><img src="https://farm6.staticflickr.com/5080/14022922767_5176acafb9_o.png" width="793" height="166" alt="cname-settings"></a></p>
+<p>这里有两条A记录，一条CNAME。两条A记录指向的就是我的博客所在的VPS：</p>
+<ul>
+<li>第二条容易理解，就是将 <code>www.zhouliang.pro</code> 指向了VPS的IP地址，这样你使用 <code>http://www.zhouliang.pro</code> 就可以访问我的博客了；</li>
+<li>第一条有点奇怪，这里是一个泛域名，也就是将 <code>zhouliang.pro</code> 也指向了这个IP地址，也就是说你用 <code>http://zhouliang.pro</code> 也可以直接访问我的博客。</li>
+<li>第三条记录就是一个CNAME指向，也许你已经在浏览器中打开了 <code>http://i.zhouliang.pro</code> ，我将 <code>i.zhouliang.pro</code> 转向了网易轻博客服务，放了几张照片，你们感受一下，小清新有木有。</li>
+</ul>
+<blockquote>
+<p>彩蛋：买域名的时候特别注意服务商是不是提供免费的泛域名解析服务，不提供的都是耍流氓，据我所知，万网就是在耍流氓。</p>
+</blockquote>
+<h2 id="dig-命令"><a href="#dig-命令" class="headerlink" title="dig 命令"></a>dig 命令</h2><p>学习Linux命令只有一条路，那就是：<code>man dig</code>，到控制台敲一下这个命令，输出略长。本文的目的是先大致介绍一下，深入了解还是得细读<code>man dig</code>。<br>在控制台输入，输出结果如下：</p>
+<pre><code>$ dig i.zhouliang.pro
+; &lt;&lt;&gt;&gt; DiG 9.8.3-P1 &lt;&lt;&gt;&gt; i.zhouliang.pro
+;; global options: +cmd
+;; Got answer:
+;; -&gt;&gt;HEADER&lt;&lt;- opcode: QUERY, status: NOERROR, id: 45515
+;; flags: qr rd ra; QUERY: 1, ANSWER: 2, AUTHORITY: 0, ADDITIONAL: 0
+;; QUESTION SECTION:
+;i.zhouliang.pro.       IN  A
+;; ANSWER SECTION:
+i.zhouliang.pro.        14400   IN  CNAME   mydomain.lofter.com.
+mydomain.lofter.com.    18000   IN  A       54.248.125.234
+;; Query time: 211 msec
+;; SERVER: 192.168.106.1#53(192.168.106.1)
+;; WHEN: Fri Jan 24 00:43:26 2014
+;; MSG SIZE  rcvd: 82
+</code></pre>
+<p>输出结果大致分成4个部分，实际上可能还包括更多的内容，总共会有以下6个部分：</p>
+<ol>
+<li><strong>Header</strong>: 包括软件版本，全局变量以及除消息头以外的其他部分的信息，比如上例中，显示有1个QUERY，2个ANSWER</li>
+<li><strong>QUESTION SECTION</strong>: 请求参数信息，也就是你的输入</li>
+<li><strong>ANSWER SECTION</strong>: 从DNS查询到的信息，也就是输出，显示<code>i.zhouliang.pro</code>是CNAME，指向<code>mydomain.lofter.com</code>，而后者是一个A记录，指向一个IP地址</li>
+<li><strong>AUTHORITY SECTION</strong>: 包含DNS域名服务器的授权信息，上例中不包含这一部分，如果用这个命令就可以看到 <code>dig @ns1.redhat.com redhat.com</code> ，这里的<code>@</code>符号用于指定查询所使用的DNS服务器</li>
+<li><strong>ADDITIONAL SECTION</strong>: 包含AUTHORITY SECTION中的域名服务器的IP地址，同样，上例中也不包含这一部分</li>
+<li><strong>Stats section</strong>: 最下方的一部分，显示了查询时间等额外信息</li>
+</ol>
+<p>另外，上面所有的以 <code>;</code> 开头的行实际上都是注释。<br>可以通过下面的参数来控制显示或者不显示上面的这些部分：</p>
+<ol>
+<li>+nocomments :  不显示注释</li>
+<li>+noauthority :  不显示AUTHORITY SECTION</li>
+<li>+noadditional :  不显示ADDITIONAL SECTION</li>
+<li>+nostats :  不显示Stats section</li>
+<li>+noanswer :  不显示ANSWER SECTION</li>
+<li>+noall : 不显示所有的信息，一般会这样用 <code>dig zhouliang.pro +noall +answer</code></li>
+</ol>
+<p>和上面参数对应还有<code>+comments</code>，<code>+answer</code>等，后文有示例，此处不赘述。另外，还有如下两个参数需要了解：</p>
+<ul>
+<li>+short : 显示简短的信息</li>
+<li>-t &lt;type&gt; : 指定查询的记录类型，可以是CNAME、A、MX、NS，分别表示CNAME、A记录、MX记录、DNS服务器，默认是A</li>
+<li>-x : 表示反向查找，也就是根据IP地址查找域名</li>
+</ul>
+<h2 id="dig命令示例"><a href="#dig命令示例" class="headerlink" title="dig命令示例"></a>dig命令示例</h2><p>下面来举几个实用的例子。</p>
+<h3 id="查看域名"><a href="#查看域名" class="headerlink" title="查看域名"></a>查看域名</h3><pre><code>$ dig i.zhouliang.pro +noall +anwser
+; &lt;&lt;&gt;&gt; DiG 9.8.3-P1 &lt;&lt;&gt;&gt; i.zhouliang.pro +noall +answer
+;; global options: +cmd
+i.zhouliang.pro.            10034    IN    CNAME    mydomain.lofter.com.
+mydomain.lofter.com.        9183     IN    A        54.248.125.234
+</code></pre>
+<p>特别注意这里输出了两行，第一行是CNAME，先将<code>i.zhouliang.pro</code>解析成<code>mydomain.lofter.com</code>，第二行是A记录，将<code>mydomain.lofter.com</code>解析成IP地址。这是一个完整的域名解析过程。</p>
+<h3 id="查找域名的MX记录："><a href="#查找域名的MX记录：" class="headerlink" title="查找域名的MX记录："></a>查找域名的MX记录：</h3><pre><code>$ dig zhouliang.pro -t MX +short
+10 mxdomain.qq.com.
+</code></pre>
+<p>从输出可以看出，我用了QQ提供的域名邮箱服务。</p>
+<h3 id="查找域名对应的CNAME："><a href="#查找域名对应的CNAME：" class="headerlink" title="查找域名对应的CNAME："></a>查找域名对应的CNAME：</h3><pre><code>$ dig i.zhouliang.pro -t CNAME +short
+mydomain.lofter.com.
+</code></pre>
+<p>从输出可以看出，我用了网易Loft提供的博客服务。另外，这个方法刚好解答了本文开头所提到的那个问题。</p>
+<h3 id="根据IP地址反向查找域名"><a href="#根据IP地址反向查找域名" class="headerlink" title="根据IP地址反向查找域名"></a>根据IP地址反向查找域名</h3><pre><code>$ dig -x 8.8.8.8 +short
+; &lt;&lt;&gt;&gt; DiG 9.8.3-P1 &lt;&lt;&gt;&gt; -x 8.8.8.8 +noall +answer
+;; global options: +cmd
+8.8.8.8.in-addr.arpa.    79605    IN    PTR    google-public-dns-a.google.com.
+</code></pre>
+<p>从输出可以看出，Google的这个DNS服务器有个域名叫做google-public-dns-a.google.com</p>
+<h3 id="查询域名的解析DNS服务器地址"><a href="#查询域名的解析DNS服务器地址" class="headerlink" title="查询域名的解析DNS服务器地址"></a>查询域名的解析DNS服务器地址</h3><pre><code>$ dig zhouliang.pro ns +short
+ns15.bigwww.com.
+ns13.bigwww.com.
+</code></pre>
+<p>从输出可以找到我的解析我的域名的DNS服务器地址。</p>
+<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><ul>
+<li><a target="_blank" rel="noopener" href="http://www.thegeekstuff.com/2012/02/dig-command-examples/">10 Linux DIG Command Examples for DNS Lookup</a></li>
+</ul>
+</div></article></div></main><footer><div class="paginator"><a class="prev" href="/2014/04/18/mysql-tmp_table_size-max_heap_table_size/">prev</a><a class="next" href="/2014/01/25/token-bucket-algorithm/">next</a></div><div class="copyright"><p>&copy; 2012 - 2021 <a href="https://zh-liang-cn.github.io">Liang</a>.<br>Powered by <a href="https://hexo.io/" target="_blank">Hexo</a> &amp; <a href="https://github.com/Dreyer/hexo-theme-artemis" target="_blank">Artemis</a>.</p></div></footer></div></body></html>

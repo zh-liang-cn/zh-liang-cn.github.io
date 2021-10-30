@@ -1,0 +1,79 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="X-UA-Compatible" content="IE=edge"><title>Linux mount命令详解 | 周亮的博客</title><meta name="description" content="Linux mount命令详解 - Liang"><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="icon" href="/favicon.png"><link rel="stylesheet" href="/css/theme.css"><link rel="search" type="application/opensearchdescription+xml" href="/atom.xml" title="周亮的博客"><meta name="generator" content="Hexo 5.4.0"><link rel="alternate" href="/atom.xml" title="周亮的博客" type="application/atom+xml">
+</head><body><div class="wrap"><header><h1 class="branding"><a href="/" title="周亮的博客">周亮的博客</a></h1><ul class="nav nav-list"><li class="nav-list-item"><a class="nav-list-link" href="/" target="_self">HOME</a></li><li class="nav-list-item"><a class="nav-list-link" href="/archives" target="_self">ARCHIVES</a></li><li class="nav-list-item"><a class="nav-list-link" href="https://github.com/zh-liang-cn/" target="_blank">GITHUB</a></li><li class="nav-list-item"><a class="nav-list-link" href="/atom.xml" target="_self">RSS</a></li></ul></header><main class="container"><div class="post"><article class="post-block"><h1 class="post-title">Linux mount命令详解</h1><div class="post-info"><a></a>2014-05-23</div><div class="post-content"><p>_mount_命令在我心目中一直是个高大上的命令：首先，经常看见长度很长的_mount_命令；其次，是直接配置硬件的命令，敲命令的时候总是难免担心把机器搞挂了。因此，我一直以来在Mac OS和Ubuntu中都依靠操作系统自动检查插入的磁盘，就像在Windows里面一样，简直弱爆了。今天就抽空把整理一下这方面的知识。</p>
+<h2 id="mount命令结构"><a href="#mount命令结构" class="headerlink" title="mount命令结构"></a>mount命令结构</h2><p>先举个例子：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">mount -o remount,rw -t yaffs2 /dev/block/mtdblock3 /system</span><br></pre></td></tr></table></figure>
+
+<p>这个例子里面基本分为四部分，也是我们最常用的四部分：</p>
+<ul>
+<li><code>-o remount,rw</code>，指定选项</li>
+<li><code>-t yaffs2</code>，指定挂载磁盘上的文件系统的类型，这里的_yaffs2_是_Android_的文件系统类型</li>
+<li><code>/dev/block/mtdblock3</code>，指定磁盘的路径</li>
+<li><code>/system</code>，指定挂载点</li>
+</ul>
+<p>也就是这样：</p>
+<pre><code>mount -o &lt;选项&gt; -t &lt;文件系统类型&gt; &lt;磁盘路径&gt; &lt;挂载点&gt;
+</code></pre>
+<p>需要注意的是：</p>
+<ul>
+<li><code>-t</code>一般情况下不用自定，操作系统会自动识别</li>
+<li>磁盘路径查看方法：Linux: <code>fdisk -l</code>；Mac：<code>diskutil list</code></li>
+</ul>
+<blockquote>
+<p>关于_fdisk_和_diskutil_，请参考：<a target="_blank" rel="noopener" href="http://superuser.com/questions/671725/what-is-the-equivalent-of-the-linux-command-sudo-fdisk-l-in-macos">What is the equivalent of the Linux command “sudo fdisk -l” in MacOS?</a></p>
+</blockquote>
+<h2 id="mount命令的-o选项"><a href="#mount命令的-o选项" class="headerlink" title="mount命令的-o选项"></a>mount命令的-o选项</h2><p>这个命令相对比较复杂的地方可能就是这里了：首先，选项可以有很多个，用逗号分隔；其次，针对不同的文件系统，可能有一些特殊的选项，可以参考<a target="_blank" rel="noopener" href="http://linux.die.net/man/8/mount">man mount</a>，里面用很长的篇幅说明了_mount options for xx_。</p>
+<p>我们记住一下几个常用的就好了：</p>
+<ul>
+<li>修改已经_mount_的文件系统的属性：<em>remount</em></li>
+<li>控制读写权限的：<em>rw_与_ro</em></li>
+<li>控制执行权限的：<em>exec_与_noexec</em></li>
+<li>控制执行权限的：_suid_与_nosuid_。允许和禁止set-user-identifier 或set-group-identifier位起作用</li>
+<li>控制挂载和卸载权限的：_user_与_nouser_，_users_与_nousers_。前者是允许或禁止先前挂载该文件系统的用户挂载和卸载，后者是允许所有的用户挂载和卸载</li>
+<li>控制文件系统的读写方式：<em>sync_与_async</em></li>
+<li>防止用户读写某些系统关键数据：_dev_与_nodev_，如果需要深入了解，请阅读：<a target="_blank" rel="noopener" href="http://superuser.com/questions/538550/understanding-mount-option-nodev-and-its-use-with-usb-flash-drives">Understanding mount option nodev and its use with USB flash drives</a></li>
+<li>如果打开了文件，是否更新文件的访问时间：<em>atime_与_noatime</em></li>
+<li>如果文件的访问时间比当前时间还早，是否更新访问时间：<em>relatime_与_norelatime</em></li>
+<li><em>defaults_：默认选项，包括：_rw_，_suid_，_dev_，_exec_，_auto_，_nouser_，_async_以及_relatime</em></li>
+</ul>
+<blockquote>
+<p>关于_set-user-identifier_详见：<a target="_blank" rel="noopener" href="http://www.linuxnix.com/2011/12/suid-set-suid-linuxunix.html">What is SUID and how to set SUID in Linux/Unix?</a>，这篇文章中有几个例子，想必很容易理解了。</p>
+</blockquote>
+<h2 id="挂载远程文件系统"><a href="#挂载远程文件系统" class="headerlink" title="挂载远程文件系统"></a>挂载远程文件系统</h2><p>Linux和Linux之间文件共享，据我目前所知有两种方法：</p>
+<ol>
+<li>一种是基于NFS，参考：<a target="_blank" rel="noopener" href="http://www.tecmint.com/how-to-setup-nfs-server-in-linux/">How to Setup NFS (Network File System) on RHEL/CentOS/Fedora and Debian/Ubuntu</a></li>
+<li>另一种是基于SSH来挂在远程文件系统，称为sshfs，参考：<a target="_blank" rel="noopener" href="http://www.howtogeek.com/howto/ubuntu/how-to-mount-a-remote-folder-using-ssh-on-ubuntu/">How to Mount a Remote Folder using SSH on Ubuntu</a></li>
+</ol>
+<p>链接中已经给出了具体的方法，此处不赘述，命令格式完全符合本文中提到的结构和参数，除了sshfs是使用_sshfs_命令，而不是_mount_命令。</p>
+<pre><code>mount -t nfs 192.168.0.100:/nfsshare /mnt/nfsshare
+sshfs share@192.168.0.100:/sshshare /mnt/sshshare
+</code></pre>
+<h2 id="etc-fstab"><a href="#etc-fstab" class="headerlink" title="/etc/fstab"></a>/etc/fstab</h2><p>另外，<em>mount_还有一个参数是_mount -a_，这就不得不提一下Linux中的</em>/etc/fstab_文件和_/etc/mtab_文件。前者是系统启动时会自动挂载的文件系统的信息，后者是系统当前已挂载的文件系统信息。你会发现这个文件里面的配置基本和_mount_命令的参数一致。</p>
+<pre><code>$ cat /etc/fstab
+# &lt;file system&gt; &lt;mount point&gt;   &lt;type&gt;  &lt;options&gt;       &lt;dump&gt;  &lt;pass&gt;
+proc            /proc           proc    nodev,noexec,nosuid 0       0
+...
+
+$ cat /etc/mtab
+proc /proc proc rw,noexec,nosuid,nodev 0 0
+...
+</code></pre>
+<p>不一样的地方是后面两个字段:</p>
+<ol>
+<li>_&lt;dump&gt;<em>告诉_dump_命令是否需要备份这个文件系统，上面例子中因为_proc_是一个<a target="_blank" rel="noopener" href="http://baike.baidu.com/view/6096934.htm">伪文件系统，用于通过内核来访问进程信息</a>，因此不用备份，这个字段是_0</em></li>
+<li>_&lt;pass&gt;<em>告诉</em><a target="_blank" rel="noopener" href="http://baike.baidu.com/view/1757895.htm">fsck</a><em>命令是否需要在检查该文件系统，如果需要开机检查该文件系统，可以将这个字段设置为_1</em></li>
+</ol>
+<p>回到_mount -a_，一句话，此命令就是读取_/etc/fstab_，挂载里面的文件系统，一般Linux系统启动的时候会执行这个命令。</p>
+<h2 id="Linux挂载Windows共享"><a href="#Linux挂载Windows共享" class="headerlink" title="Linux挂载Windows共享"></a>Linux挂载Windows共享</h2><p>一般情况下，可以通过下面这个命令来将Windows的共享挂载到Linux的文件系统中：</p>
+<pre><code>mount -t cifs -o username=administrator,password=admin //192.168.0.1/share/ /mnt/windows
+</code></pre>
+<p>_<a target="_blank" rel="noopener" href="http://baike.baidu.com/view/1034390.htm">cifs</a><em>是微软实现的一种在Windows主机之间进行网络共享的协议。如果你需要在开机的时候自动挂载此文件系统，同样可以相应的配置写到</em>/etc/fstab_文件中。</p>
+<h2 id="umount"><a href="#umount" class="headerlink" title="umount"></a>umount</h2><p>顾名思义，就是卸载文件系统。这个命令更加简单，参数可以是挂载点，也可以是磁盘名称，即下面两种方法均可：</p>
+<pre><code>mount /dev/hda1 /mydoc
+umount /dev/hda1
+umount /mydoc
+</code></pre>
+<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><ul>
+<li><a target="_blank" rel="noopener" href="http://linux.die.net/man/8/mount">mount(8) - Linux man page</a></li>
+<li><a target="_blank" rel="noopener" href="http://www.cnblogs.com/chengmo/archive/2010/10/13/1850515.html">linux mount挂载设备（u盘,光盘,iso等 ）使用说明</a></li>
+</ul>
+</div></article></div></main><footer><div class="paginator"><a class="prev" href="/2014/06/04/git-tips/">prev</a><a class="next" href="/2014/04/18/mysql-tmp_table_size-max_heap_table_size/">next</a></div><div class="copyright"><p>&copy; 2012 - 2021 <a href="https://zh-liang-cn.github.io">Liang</a>.<br>Powered by <a href="https://hexo.io/" target="_blank">Hexo</a> &amp; <a href="https://github.com/Dreyer/hexo-theme-artemis" target="_blank">Artemis</a>.</p></div></footer></div></body></html>

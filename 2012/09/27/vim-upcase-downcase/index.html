@@ -1,0 +1,22 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="X-UA-Compatible" content="IE=edge"><title>VIM字符大小写转换 | 周亮的博客</title><meta name="description" content="VIM字符大小写转换 - Liang"><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="icon" href="/favicon.png"><link rel="stylesheet" href="/css/theme.css"><link rel="search" type="application/opensearchdescription+xml" href="/atom.xml" title="周亮的博客"><meta name="generator" content="Hexo 5.4.0"><link rel="alternate" href="/atom.xml" title="周亮的博客" type="application/atom+xml">
+</head><body><div class="wrap"><header><h1 class="branding"><a href="/" title="周亮的博客">周亮的博客</a></h1><ul class="nav nav-list"><li class="nav-list-item"><a class="nav-list-link" href="/" target="_self">HOME</a></li><li class="nav-list-item"><a class="nav-list-link" href="/archives" target="_self">ARCHIVES</a></li><li class="nav-list-item"><a class="nav-list-link" href="https://github.com/zh-liang-cn/" target="_blank">GITHUB</a></li><li class="nav-list-item"><a class="nav-list-link" href="/atom.xml" target="_self">RSS</a></li></ul></header><main class="container"><div class="post"><article class="post-block"><h1 class="post-title">VIM字符大小写转换</h1><div class="post-info"><a></a>2012-09-27</div><div class="post-content"><p>VIM提供了字符大小写转换的快捷键，在coding的时候会感觉很贴心，当然，前提是记住他们。</p>
+<h2 id="转换一个字符"><a href="#转换一个字符" class="headerlink" title="转换一个字符"></a>转换一个字符</h2><p>大小写转换(大写转换成小写，小写转换成大写)快捷键<code>~</code>。</p>
+<ul>
+<li>转换1个字符，光标移动到要转换的字符上，按<code>~</code></li>
+<li>转换多个字符，将光标移动到想要大小写转换的地方然后键入: 个数 + ‘<del>‘。如:转换(大写转小写，小写转大写)10个字母:`10</del>`</li>
+</ul>
+<h2 id="转换一个单词"><a href="#转换一个单词" class="headerlink" title="转换一个单词"></a>转换一个单词</h2><p>将小写单词转换为大写单词：<code>gUw</code></p>
+<p>将大写单词转换为小写：<code>guw</code></p>
+<p>将单词中的大写改为小写，将小写改为大写：<code>g~w</code></p>
+<p>其中：</p>
+<ul>
+<li><code>gu</code>表示把选定范围全部小写</li>
+<li><code>gU</code>表示把选定范围全部大写</li>
+<li><code>w</code>表示选定范围为单词</li>
+</ul>
+<p>依此类推，<code>ggguG</code>表示把整篇文章转换为小写，<code>gg</code>表示光标移动到文章开头，<code>G</code>表示选定范围为到文章结尾</p>
+<h2 id="转换一行"><a href="#转换一行" class="headerlink" title="转换一行"></a>转换一行</h2><p>将整行转换为小写：<code>guu</code>。</p>
+<p>将整行转换为大写：<code>gUU</code>。</p>
+<p>将一行中的大写转换为小写，将小写转换为大写：<code>g~~</code></p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p><code>gu</code>和<code>gU</code>分别表示转换为小写和大写，后面跟转换范围，比如<code>5w</code>（5个单词）等。</p>
+</div></article></div></main><footer><div class="paginator"><a class="prev" href="/2013/01/07/ruby-command-line-params-you-should-know/">prev</a><a class="next" href="/2012/09/11/javascript-date/">next</a></div><div class="copyright"><p>&copy; 2012 - 2021 <a href="https://zh-liang-cn.github.io">Liang</a>.<br>Powered by <a href="https://hexo.io/" target="_blank">Hexo</a> &amp; <a href="https://github.com/Dreyer/hexo-theme-artemis" target="_blank">Artemis</a>.</p></div></footer></div></body></html>

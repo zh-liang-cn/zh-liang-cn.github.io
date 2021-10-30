@@ -1,0 +1,85 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="X-UA-Compatible" content="IE=edge"><title>MySQL Master-Slave Replication / 主从复制 | 周亮的博客</title><meta name="description" content="MySQL Master-Slave Replication / 主从复制 - Liang"><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="icon" href="/favicon.png"><link rel="stylesheet" href="/css/theme.css"><link rel="search" type="application/opensearchdescription+xml" href="/atom.xml" title="周亮的博客"><meta name="generator" content="Hexo 5.4.0"><link rel="alternate" href="/atom.xml" title="周亮的博客" type="application/atom+xml">
+</head><body><div class="wrap"><header><h1 class="branding"><a href="/" title="周亮的博客">周亮的博客</a></h1><ul class="nav nav-list"><li class="nav-list-item"><a class="nav-list-link" href="/" target="_self">HOME</a></li><li class="nav-list-item"><a class="nav-list-link" href="/archives" target="_self">ARCHIVES</a></li><li class="nav-list-item"><a class="nav-list-link" href="https://github.com/zh-liang-cn/" target="_blank">GITHUB</a></li><li class="nav-list-item"><a class="nav-list-link" href="/atom.xml" target="_self">RSS</a></li></ul></header><main class="container"><div class="post"><article class="post-block"><h1 class="post-title">MySQL Master-Slave Replication / 主从复制</h1><div class="post-info"><a></a>2014-01-19</div><div class="post-content"><p>通过MySQL主从复制（Master-Slave）来实现读写分离是一种常用的扩展方法：所有的写操作通过Master完成，所有的读操作通过Slave来完成，也可以设置一主多从，或者双主的方式来实现负载均衡，极大的增强了MySQL的可扩展性。我所在的Team也是通过MySQL的这种主从复制的结构来扩展MySQL的性能的，不过，我并没有参与搭建这个平台，本文是我在业余进行的自学结果（不管你有没有读出来，这里的言外之意就是按照我这里搞如果搞出问题来了，我是不负责的）。</p>
+<h2 id="MySQL主从复制的实现原理"><a href="#MySQL主从复制的实现原理" class="headerlink" title="MySQL主从复制的实现原理"></a>MySQL主从复制的实现原理</h2><p>先上张图，非常经典的图：</p>
+<p><a target="_blank" rel="noopener" href="https://www.flickr.com/photos/zhlwish/14209516325/" title="Flickr 上 zhlwish 的 mysql-master-slave-replication"><img src="https://farm6.staticflickr.com/5274/14209516325_b71b337f96_o.png" width="507" height="320" alt="mysql-master-slave-replication"></a></p>
+<p>总结起来有这么4个步骤：</p>
+<ul>
+<li>Slave上面的_I/O thread_连接上Master，并请求从指定日志文件的指定位置(或者从最开始的日志)之后的日志内容;</li>
+<li>Master接收到来自Slave的_I/O thread_的请求后，通过负责复制的_I/O thread_根据请求信息读取指定日志指定位置之后的日志信息，返回给 Slave端的_I/O thread_。返回信息中除了日志所包含的信息之外，还包括本次返回的信息在Master端的Binary Log文件的名称以及在Binary Log（一般是mysql-bin.xxxxxx）中的位置;</li>
+<li>Slave的_I/O thread_接收到信息后，将接收到的日志内容依次写入到Slave端的Relay Log文件（一般是mysql-relay-bin.xxxxxx）的最末端，并将读取到的Master端的Binary Log的文件名和位置记录到<code>master.info</code>文件中，以便在下一次读取的时候能够清楚的告诉Master“我需要从某个Binary Log的哪个位置开始往后的日志内容，请发给我”；</li>
+<li>Slave 的_SQL thread_检测到Relay Log中新增加了内容后，会马上解析该Log文件中的内容成为在Master端真实执行时候的可执行的Query语句，并在自身执行这些Query。这样，实际上就是在Master端和Slave端执行了同样的Query，所以两端的数据是完全一样的。</li>
+</ul>
+<h2 id="MySQL主从复制的搭建"><a href="#MySQL主从复制的搭建" class="headerlink" title="MySQL主从复制的搭建"></a>MySQL主从复制的搭建</h2><p>下面的步骤参考了MySQL官方的<a target="_blank" rel="noopener" href="http://dev.mysql.com/doc/refman/5.5/en/replication.html">MySQL 5.5 Reference Manual :: 16 Replication</a>，顺便吐槽一下,这个手册写的组织结构实在有点乱。</p>
+<h3 id="1-配置MySQL-Master"><a href="#1-配置MySQL-Master" class="headerlink" title="1. 配置MySQL Master"></a>1. 配置MySQL Master</h3><p>首先，打开Master的Binary Log功能，修改Master服务器的<strong>my.cnf</strong>文件:</p>
+<pre><code>[mysqld]
+log-bin=mysql-bin
+server-id=1
+</code></pre>
+<p>有三点需要注意的是：</p>
+<ul>
+<li><code>server-id</code>在整个Replication Group（即所有的Master和Slave服务器）里面必须是唯一的;</li>
+<li>如果你使用了InnoDB，可以启用<code>innodb_flush_log_at_trx_commit=1</code>和<code>sync_binlog=1</code>，第一个参数指定每次事务提交后都需要将内存缓冲中的临时Log写入到硬盘上，第二个参数指定在事务提交后立即将内存缓冲中的临时Binary Log写入到硬盘上。通过指定这两个参数可以提高_Durability_和_Consistency_，不过却牺牲了性能，详见 <a target="_blank" rel="noopener" href="http://wzmtony.blog.163.com/blog/static/20318015620130171834386/">MySQL的innodb_flush_log_at_trx_commit配置值的设定</a> 和 <a target="_blank" rel="noopener" href="http://www.cnblogs.com/Cherie/p/3309503.html">Mysql配置参数sync_binlog说明</a>；</li>
+<li><code>skip-networking</code>这一行必须注释掉，不然无法通过网络连接MySQL服务器。</li>
+</ul>
+<p>本文前面提到，Slave的_I/O thread_会连接到Master上读取Binary Log，因此需要设定一个用户名和密码，原则上这里可以使用任何一个MySQL用户名。但是考虑到Slave会将这个用户名和密码用明文的方式保存在<code>data/master.info</code>文件中，不太安全。因此一般创建一个独立的账户，并且使这个账户只有<code>replication slave</code>的权限。</p>
+<p>用MySQL客户端连接Master上，执行下面语句，在Master上创建一个账户，并赋予<code>replication slave</code>的权限：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">create</span> <span class="keyword">user</span> <span class="string">&#x27;replication_user&#x27;</span>@<span class="string">&#x27;%.xxx.com&#x27;</span> identified <span class="keyword">by</span> <span class="string">&#x27;replication_password&#x27;</span>;</span><br><span class="line"><span class="keyword">grant</span> replication slave <span class="keyword">on</span> <span class="operator">*</span>.<span class="operator">*</span> <span class="keyword">to</span> <span class="string">&#x27;replication_user&#x27;</span>@<span class="string">&#x27;%.xxx.com&#x27;</span>;</span><br></pre></td></tr></table></figure>
+
+<p>如果执行上面的语句的时候出现这样的错误：</p>
+<pre><code>ERROR 1045 (28000): Access denied for user &#39;root&#39;@&#39;%&#39; (using password: YES)
+</code></pre>
+<p>可能是你所使用的账户没有<code>grant option</code>权限。出于安全的考虑，有些MySQL服务器可能禁用了不是从_localhost_进行连接的<code>grant option</code>的权限，到MySQL服务器上，用<code>root</code>建立连接，并执行下面的语句</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">grant</span> <span class="keyword">GRANT</span> OPTION <span class="keyword">on</span> <span class="operator">*</span>.<span class="operator">*</span> <span class="keyword">to</span> <span class="string">&#x27;root&#x27;</span>@<span class="string">&#x27;%&#x27;</span>;</span><br><span class="line">flush privileges;</span><br></pre></td></tr></table></figure>
+
+<p>然后重新在执行之前的<code>grant</code>语句。所有配置完成后，重启MySQL Master服务器。</p>
+<h3 id="2-配置MySQL-Slave"><a href="#2-配置MySQL-Slave" class="headerlink" title="2. 配置MySQL Slave"></a>2. 配置MySQL Slave</h3><p>修改Slave服务器的<strong>my.cnf</strong>文件，只需要将<code>server-id</code>配置得和Master不一样即可:</p>
+<pre><code>[mysqld]
+server-id=2
+</code></pre>
+<p>配置完成后重启MySQL Slave服务器。</p>
+<p>注意，在Salve上可以不启用Binary Log，不过启用了有两方面用处：</p>
+<ul>
+<li>作为备份，可以从Slave定期备份Binary Log，不用增加Master的负担；</li>
+<li>可以将Slave配置成其他MySQL实例的Master，实现更复杂的拓扑结构（Topology）。</li>
+</ul>
+<h3 id="3-复制数据"><a href="#3-复制数据" class="headerlink" title="3. 复制数据"></a>3. 复制数据</h3><p>如果不能允许数据库宕机，或者数据量不算太大，可以用<code>mysqldump</code>完整备份整个数据库：</p>
+<pre><code>mysqldump --all-databases --master-data &gt; dbdump.sql
+</code></pre>
+<p>注意，这里如果指定了<code>--master-data</code>，在备份文件中会自动生成这样的语句:</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">CHANGE MASTER <span class="keyword">TO</span> MASTER_LOG_FILE<span class="operator">=</span><span class="string">&#x27;mysqld-bin.xxxxxx&#x27;</span>, MASTER_LOG_POS<span class="operator">=</span>xxx;</span><br></pre></td></tr></table></figure>
+
+<p>如果不指定这个参数，就必须先执行下面语句来对整个数据库加读锁。对于InnoDB，这会阻塞所有的写操作。</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">flush <span class="keyword">table</span> <span class="keyword">with</span> read lock;</span><br></pre></td></tr></table></figure>
+
+<p>然后执行</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">show</span> master status;</span><br></pre></td></tr></table></figure>
+
+<p>来查看并记录当前的Binary Log文件的名称和位置，然后在Slave上导入数据的时候（即本文的下一步）手动执行上面的<code>change master to ...</code>语句。</p>
+<p>当然最后需要执行下面的语句来释放之前加在数据库上的读锁：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">unlock tables;</span><br></pre></td></tr></table></figure>
+
+<h3 id="4-在Slave导入数据，启动Slave"><a href="#4-在Slave导入数据，启动Slave" class="headerlink" title="4. 在Slave导入数据，启动Slave"></a>4. 在Slave导入数据，启动Slave</h3><p>连接到Slave上，执行下面的命令：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">stop slave;</span><br><span class="line">reset slave;</span><br><span class="line">change master <span class="keyword">to</span></span><br><span class="line">   master_host <span class="operator">=</span> <span class="string">&#x27;your master host&#x27;</span>,</span><br><span class="line">   master_user <span class="operator">=</span> <span class="string">&#x27;replication_user&#x27;</span>,</span><br><span class="line">   master_password <span class="operator">=</span> <span class="string">&#x27;replication_password&#x27;</span>;</span><br></pre></td></tr></table></figure>
+
+<p>在控制台中执行下面命令向Slave中导入Master的数据：</p>
+<pre><code>msyql -u root -p &lt; dbdump.sql
+</code></pre>
+<p>完成后，用MySQL客户端连接到Slave上，执行下面命令启动Slave的I/O thread和SQL thread：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">start</span> slave;</span><br></pre></td></tr></table></figure>
+
+<p>完成后，可以通过下面这个命令来检查Slave的状态：</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">show</span> slave status;</span><br></pre></td></tr></table></figure>
+
+<p>如果<code>Slave_IO_Running</code>和<code>Slave_SQL_Running</code>列的值都是<code>Yes</code>，就看起来正常了，这时你可以尝试在Master上创建一张表，然后在Slave上检查，你会发现这个表在Slave上也出现了。<br>我在配置的时候发现<code>Slave_SQL_Running = No</code>，而且<code>Last_Error</code>列出现了一个错误。后来发现是我在配置的时候没有在Slave上执行<code>stop slave; reset slave;</code>这两个语句导致的。当然也可以在启动Salve的时候指定<code>--skip-slave-start</code>参数。</p>
+<blockquote>
+<p>2014-02-20更新：如果<code>Last_Error</code>列出现的错误是<code>Could not execute Delete_rows event on table</code> 或者<code>Could not execute Update_rows event on table</code>等，这表示Master上删除了一条在Slave上并不存在的行，这种情况一般不会发生，除非无关紧要的数据不一致。解决这种问题的方法是在Slave上执行：<code>STOP SLAVE; SET SQL_SLAVE_SKIP_COUNTER=1; START SLAVE;</code>，直接忽略这个错误。但是这种方法显然不好，请参考<a target="_blank" rel="noopener" href="http://www.mysqlperformanceblog.com/2013/07/23/another-reason-why-sql_slave_skip_counter-is-bad-in-mysql/">Another reason why SQL_SLAVE_SKIP_COUNTER is bad in MySQL</a>。</p>
+</blockquote>
+<h2 id="离线复制数据"><a href="#离线复制数据" class="headerlink" title="离线复制数据"></a>离线复制数据</h2><p>除了使用<code>mysqldump</code>命令来实现从Master拷贝数据到Slave上以外，还可以直接打包整个Master的<code>data</code>目录并复制Slave上来实现，详见 <a target="_blank" rel="noopener" href="http://dev.mysql.com/doc/refman/5.5/en/replication-howto-rawdata.html">Creating a Data Snapshot Using Raw Data Files</a>。</p>
+<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><ul>
+<li><a target="_blank" rel="noopener" href="http://dev.mysql.com/doc/refman/5.5/en/replication.html">MySQL 5.5 Reference Manual :: 16 Replication</a></li>
+<li><a target="_blank" rel="noopener" href="http://tech.it168.com/a2009/0526/577/000000577294.shtml">MySQL Replication的实现原理</a></li>
+<li><a target="_blank" rel="noopener" href="http://www.cnblogs.com/hustcat/archive/2009/12/19/1627525.html">理解MySQL–复制(Replication)</a></li>
+<li><a target="_blank" rel="noopener" href="http://blog.csdn.net/wlzjsj/article/details/8032493">mysql主从复制搭建中几种log和pos详解</a></li>
+<li><a target="_blank" rel="noopener" href="http://blog.longwin.com.tw/2008/03/mysql_replication_master_slave_set_2008/">MySQL 設定 Replication (Master - Slave)</a></li>
+</ul>
+</div></article></div></main><footer><div class="paginator"><a class="prev" href="/2014/01/25/token-bucket-algorithm/">prev</a><a class="next" href="/2014/01/13/vim-window/">next</a></div><div class="copyright"><p>&copy; 2012 - 2021 <a href="https://zh-liang-cn.github.io">Liang</a>.<br>Powered by <a href="https://hexo.io/" target="_blank">Hexo</a> &amp; <a href="https://github.com/Dreyer/hexo-theme-artemis" target="_blank">Artemis</a>.</p></div></footer></div></body></html>

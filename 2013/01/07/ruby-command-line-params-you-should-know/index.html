@@ -1,0 +1,36 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="X-UA-Compatible" content="IE=edge"><title>几个有意思的Ruby命令行参数  | 周亮的博客</title><meta name="description" content="几个有意思的Ruby命令行参数  - Liang"><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="icon" href="/favicon.png"><link rel="stylesheet" href="/css/theme.css"><link rel="search" type="application/opensearchdescription+xml" href="/atom.xml" title="周亮的博客"><meta name="generator" content="Hexo 5.4.0"><link rel="alternate" href="/atom.xml" title="周亮的博客" type="application/atom+xml">
+</head><body><div class="wrap"><header><h1 class="branding"><a href="/" title="周亮的博客">周亮的博客</a></h1><ul class="nav nav-list"><li class="nav-list-item"><a class="nav-list-link" href="/" target="_self">HOME</a></li><li class="nav-list-item"><a class="nav-list-link" href="/archives" target="_self">ARCHIVES</a></li><li class="nav-list-item"><a class="nav-list-link" href="https://github.com/zh-liang-cn/" target="_blank">GITHUB</a></li><li class="nav-list-item"><a class="nav-list-link" href="/atom.xml" target="_self">RSS</a></li></ul></header><main class="container"><div class="post"><article class="post-block"><h1 class="post-title">几个有意思的Ruby命令行参数 </h1><div class="post-info"><a></a>2013-01-07</div><div class="post-content"><p>最近在做Ruby on Rails往JRuby上的迁移工作，积累了一些关于平常写代码时不太容易注意的环境变量、命令行参数和全局变量，了解这些知识对于进一步学习Ruby有很大的帮助，也有助于阅读一些开源框架如<a target="_blank" rel="noopener" href="https://github.com/rails/rails">Rails</a>、<a target="_blank" rel="noopener" href="https://github.com/rspec/rspec-core">Rspec</a>的代码。本文算是这个小系列的第一篇。</p>
+<h2 id="h"><a href="#h" class="headerlink" title="-h"></a>-h</h2><p>显示帮助，本文的大部分内容都是来自于这里，虽然写了将近一年时间的Ruby代码，但是却很少仔细阅读 <code>ruby -h</code> 的信息，更为详细的信息可以查看 <code>man ruby</code>。特别列出来，做个提醒。</p>
+<h2 id="e-‘script’"><a href="#e-‘script’" class="headerlink" title="-e ‘script’"></a>-e ‘script’</h2><p>直接执行一段Ruby脚本，比如:</p>
+<pre><code>$ ruby -e &#39;puts &quot;hello&quot;&#39;
+hello
+</code></pre>
+<p>为了比较不同的Ruby实现和版本的性能，可以会执行一些简单的的脚本来进行对比（测试数据仅共演示用，更好的性能对比使用<a target="_blank" rel="noopener" href="http://www.ruby-doc.org/stdlib-1.9.3/libdoc/benchmark/rdoc/Benchmark.html">Benchmark</a>或者<a target="_blank" rel="noopener" href="https://github.com/rdp/ruby-prof">ruby-prof</a>）：</p>
+<pre><code>$ time ruby -e &#39;(0..100000000).reduce(:+)&#39;
+7.81s user 0.01s system 99% cpu 7.822 total
+$ time jruby -e &#39;(0..100000000).reduce(:+)&#39;
+5.18s user 0.24s system 108% cpu 4.989 total
+</code></pre>
+<h2 id="r-‘lib’"><a href="#r-‘lib’" class="headerlink" title="-r ‘lib’"></a>-r ‘lib’</h2><p>强制让Ruby使用require去加载不包含在<a target="_blank" rel="noopener" href="http://ruby-doc.org/core-1.9.3/">核心库</a>中的其他库，如<a target="_blank" rel="noopener" href="http://ruby-doc.org/stdlib-1.9.3/">标准库</a>中的<a target="_blank" rel="noopener" href="http://ruby-doc.org/stdlib-1.9.3/libdoc/date/rdoc/Date.html">date</a>。</p>
+<p>比如下面的命令会提示报错，因为Date在标注库，Ruby启动时不会默认加载。</p>
+<pre><code>$ ruby -e &quot;puts Date.today&quot;
+-e:1:in &#39;main&#39; uninitialized constant Date (NameError)
+</code></pre>
+<p>加上<code>-r</code>参数就不会报错了，相当于执行了<code>require &quot;date&quot;&quot;</code>.</p>
+<pre><code>$ ruby -r date -e &quot;puts Date.today&quot;
+</code></pre>
+<h2 id="c"><a href="#c" class="headerlink" title="-c"></a>-c</h2><p>让Ruby进行语法检查，确保没有括号不匹配，<code>do &amp;hellip; end</code>不匹配的等语法错误。比如：</p>
+<pre><code>$ ruby -ce &#39;(1..2).each &#123; |i| puts i &#39;
+-e:1: syntax error, unexpected $end, expecting &#39;&#125;&#39;
+</code></pre>
+<p>不过如果你的程序有自动测试的话，一般不需要这一步的。以防万一，万一有偷懒没写自动测试的情况下，可以为你守住最后一条防线。</p>
+<h2 id="Idirectory"><a href="#Idirectory" class="headerlink" title="-Idirectory"></a>-Idirectory</h2><p>告诉Ruby到哪儿去加载代码。相当于在Ruby代码中执行<code>$LOAD_PATH &lt; &lt; directory</code>。我们使用的JRuby是经过自己修改过的，而且我司有自己的Package管理系统，rubygems和rake的代码分开放在独立的包中的，因此这个参数就起到了很大的作用。</p>
+<p>另外，使用<code>RUBYLIB</code>这个环境变量也可以起到同样的效果</p>
+<pre><code>$ env RUBY_LIB=&quot;directory&quot; ruby -e &quot;puts &#39;hello&#39;&quot;
+</code></pre>
+<h2 id="d"><a href="#d" class="headerlink" title="-d"></a>-d</h2><p>显示Ruby的debug信息，相当于设置了全局变量$DEBUG为true，其实没什么用，只是比较好玩 :)</p>
+<h2 id="S"><a href="#S" class="headerlink" title="-S"></a>-S</h2><p>这个参数如果不是这次从Ruby往JRuby迁移，我也不会觉得有什么用。Ruby有一套自己的命令，如果rake、gem、irb等等，Ruby自己有一个<code>RUBYPATH</code>的变量，<code>ruby -S rake -T</code>表示执行<code>RUBYPATH</code>下的rake命令。平常，我们并不需要了解这些，但是在JRuby中，我们就要这样了：</p>
+<pre><code>jruby -S gem list
+</code></pre>
+<p>如果你的机器安装了多个Ruby版本（不是用rvm），那么这个参数肯定有用的。</p>
+</div></article></div></main><footer><div class="paginator"><a class="prev" href="/2013/01/10/ruby-environment-variables-you-should-known/">prev</a><a class="next" href="/2012/09/27/vim-upcase-downcase/">next</a></div><div class="copyright"><p>&copy; 2012 - 2021 <a href="https://zh-liang-cn.github.io">Liang</a>.<br>Powered by <a href="https://hexo.io/" target="_blank">Hexo</a> &amp; <a href="https://github.com/Dreyer/hexo-theme-artemis" target="_blank">Artemis</a>.</p></div></footer></div></body></html>

@@ -1,0 +1,39 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="X-UA-Compatible" content="IE=edge"><title>MySQL删除表的时候忽略外键约束 | 周亮的博客</title><meta name="description" content="MySQL删除表的时候忽略外键约束 - Liang"><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="icon" href="/favicon.png"><link rel="stylesheet" href="/css/theme.css"><link rel="search" type="application/opensearchdescription+xml" href="/atom.xml" title="周亮的博客"><meta name="generator" content="Hexo 5.4.0"><link rel="alternate" href="/atom.xml" title="周亮的博客" type="application/atom+xml">
+</head><body><div class="wrap"><header><h1 class="branding"><a href="/" title="周亮的博客">周亮的博客</a></h1><ul class="nav nav-list"><li class="nav-list-item"><a class="nav-list-link" href="/" target="_self">HOME</a></li><li class="nav-list-item"><a class="nav-list-link" href="/archives" target="_self">ARCHIVES</a></li><li class="nav-list-item"><a class="nav-list-link" href="https://github.com/zh-liang-cn/" target="_blank">GITHUB</a></li><li class="nav-list-item"><a class="nav-list-link" href="/atom.xml" target="_self">RSS</a></li></ul></header><main class="container"><div class="post"><article class="post-block"><h1 class="post-title">MySQL删除表的时候忽略外键约束</h1><div class="post-info"><a></a>2013-12-18</div><div class="post-content"><p>删除表不是特别常用，特别是对于存在外键关联的表，删除更得小心。但是在开发过程中，发现Schema设计的有问题而且要删除现有的数据库中所有的表来重新创建也是常有的事情；另外在测试的时候，也有需要重新创建数据库的所有表。当然很多自动化工具也可以做这样的事情。</p>
+<p>删除表的时候有时会遇到这样的错误消息：</p>
+<pre><code>ERROR 1217 (23000): Cannot delete or update a parent row: a foreign key constraint fails
+</code></pre>
+<p>这是因为你尝试删除的表中的字段被用作了其他表的外键，因此在删除这个表（父表）之前必须先删除具有外键的表（子表）。也就是说，删除表的过程需要和创建表的过程一致。</p>
+<p>但是这往往不可接受，一方面如果表太多了，手动排序有点不可接受；另一方面，现在还没有自动的工具对进行排序（其实也不是不能实现）。因此，MySQL中提供了一个变量<code>FOREIGN_KEY_CHECKS</code>来设置是否在必要的时候检查外键约束。一般比较推荐这样做：</p>
+<p>首先，自动生成所有的DROP语句，将其中的<code>MyDatabaseName</code>替换成你的数据库名称：</p>
+<pre><code class="sql">SELECT concat(&#39;DROP TABLE IF EXISTS &#39;, table_name, &#39;;&#39;)
+FROM information_schema.tables
+WHERE table_schema = &#39;MyDatabaseName&#39;;
+&#123;% endhighlight%&#125;
+
+然后，在生成的代码前后添加下面设置`FOREIGN_KEY_CHECKS`变量的语句：
+
+```sql
+SET FOREIGN_KEY_CHECKS = 0
+-- DROP语句
+SET FOREIGN_KEY_CHECKS = 1;
+&#123;% endhighlight%&#125;
+
+不过，要是忘记了最后一句也没太大关系，这个变量是基于Session的，也就是说，当你关闭了客户端，重新建立连接的时候，这个变量会恢复默认值。如果需要在全局范围内不检查外键约束（这种情况会比较少吧），可以这样做：
+
+```sql
+SET GLOBAL FOREIGN_KEY_CHECKS = 0;
+&#123;% endhighlight%&#125;
+
+或者
+
+```sql
+set @@global.FOREIGN_KEY_CHECKS = 0;
+&#123;% endhighlight%&#125;
+
+## 参考：
+
+* &lt;a href=&quot;http://stackoverflow.com/questions/8538636/mysql-set-foreign-key-checks&quot;&gt;mysql SET FOREIGN_KEY_CHECKS&lt;/a&gt;
+* &lt;a href=&quot;http://stackoverflow.com/questions/3476765/mysql-drop-all-tables-ignoring-foreign-keys&quot;&gt;MySQL DROP all tables, ignoring foreign keys&lt;/a&gt;
+</code></pre>
+</div></article></div></main><footer><div class="paginator"><a class="prev" href="/2014/01/13/vim-window/">prev</a><a class="next" href="/2013/09/13/https-ssl-x509/">next</a></div><div class="copyright"><p>&copy; 2012 - 2021 <a href="https://zh-liang-cn.github.io">Liang</a>.<br>Powered by <a href="https://hexo.io/" target="_blank">Hexo</a> &amp; <a href="https://github.com/Dreyer/hexo-theme-artemis" target="_blank">Artemis</a>.</p></div></footer></div></body></html>
