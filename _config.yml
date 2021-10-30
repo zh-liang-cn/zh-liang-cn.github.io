@@ -115,4 +115,6 @@ theme_config:
 # Deployment
 ## Docs: https://hexo.io/docs/one-command-deployment
 deploy:
-  type: ''
+  type: git
+  repo: https://github.com/zh-liang-cn/zh-liang-cn.github.io
+  branch: gh-pages
