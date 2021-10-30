@@ -2,6 +2,13 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>http://zh-liang-cn.github.io/2021/10/31/mysql-notes/</loc>
+    
+    <lastmod>2021-10-30</lastmod>
+    
+  </url>
+  
+  <url>
     <loc>http://zh-liang-cn.github.io/2011/12/15/x-window-system/</loc>
     
     <lastmod>2021-10-30</lastmod>
@@ -51,14 +58,14 @@
   </url>
   
   <url>
-    <loc>http://zh-liang-cn.github.io/2013/01/10/ruby-environment-variables-you-should-known/</loc>
+    <loc>http://zh-liang-cn.github.io/2013/01/15/ruby-global-variables-you-should-known/</loc>
     
     <lastmod>2021-10-30</lastmod>
     
   </url>
   
   <url>
-    <loc>http://zh-liang-cn.github.io/2013/01/15/ruby-global-variables-you-should-known/</loc>
+    <loc>http://zh-liang-cn.github.io/2013/01/10/ruby-environment-variables-you-should-known/</loc>
     
     <lastmod>2021-10-30</lastmod>
     
@@ -228,6 +235,27 @@
   </url>
   
   <url>
+    <loc>http://zh-liang-cn.github.io/tags/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/</loc>
+    <lastmod>2021-10-30</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
+    <loc>http://zh-liang-cn.github.io/tags/MySQL/</loc>
+    <lastmod>2021-10-30</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
+    <loc>http://zh-liang-cn.github.io/tags/Linux/</loc>
+    <lastmod>2021-10-30</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.6</priority>
+  </url>
+  
+  <url>
     <loc>http://zh-liang-cn.github.io/tags/DbUnit/</loc>
     <lastmod>2021-10-30</lastmod>
     <changefreq>daily</changefreq>
@@ -243,20 +271,6 @@
   
   <url>
     <loc>http://zh-liang-cn.github.io/tags/easymock/</loc>
-    <lastmod>2021-10-30</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.6</priority>
-  </url>
-  
-  <url>
-    <loc>http://zh-liang-cn.github.io/tags/MySQL/</loc>
-    <lastmod>2021-10-30</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.6</priority>
-  </url>
-  
-  <url>
-    <loc>http://zh-liang-cn.github.io/tags/Linux/</loc>
     <lastmod>2021-10-30</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
@@ -292,13 +306,6 @@
   
   <url>
     <loc>http://zh-liang-cn.github.io/tags/Database/</loc>
-    <lastmod>2021-10-30</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.6</priority>
-  </url>
-  
-  <url>
-    <loc>http://zh-liang-cn.github.io/tags/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/</loc>
     <lastmod>2021-10-30</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.6</priority>
